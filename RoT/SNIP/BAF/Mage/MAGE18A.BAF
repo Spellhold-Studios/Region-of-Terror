@@ -214,7 +214,7 @@ IF
 	Global("Spell4","LOCALS",0)
 THEN
 	RESPONSE #100
-		ForceSpell(LastSeenBy(Myself),WIZARD_MONSTER_SUMMONING_VI)
+		ForceSpellRES("RTWI968",LastSeenBy(Myself))
 		SetGlobal("Spell4","LOCALS",1)
 END
 

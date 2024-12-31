@@ -34,7 +34,7 @@ IF
 	GlobalLT("Spell2","LOCALS",1)
 THEN
 	RESPONSE #100
-		ForceSpell(Myself,WIZARD_MONSTER_SUMMONING_IV)
+		ForceSpellRES("RTWI733",Myself)
 		IncrementGlobal("Spell2","LOCALS",1)
 END
 

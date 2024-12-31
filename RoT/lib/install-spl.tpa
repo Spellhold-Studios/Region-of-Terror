@@ -1,46 +1,5 @@
 
 //***********************************************************************************
-// CTB compatibility
-//***********************************************************************************
-ACTION_IF NOT FILE_EXISTS_IN_GAME ~ctb.mrk~ AND NOT FILE_EXISTS ~data/CTB-RULE.BIF~
-THEN BEGIN
-  COPY ~%MOD_FOLDER%/Compat/CtB/SPWI140.SPL~ ~override~ // WIZARD_EAGLES_SPLENDOR
-    SAY NAME1  @926
-    SAY UNIDENTIFIED_DESC @927
-
-  COPY ~%MOD_FOLDER%/Compat/CtB/BAM~ ~override~
-END
-
-//***********************************************************************************
-// TDD compatibility
-//***********************************************************************************
-ACTION_IF NOT FILE_EXISTS_IN_GAME ~tdd.mrk~ AND NOT FILE_EXISTS ~data/TDD-RULE.BIF~
-THEN BEGIN
-  COPY ~%MOD_FOLDER%/Compat/TDD/SPWI733.spl~ ~override~ // WIZARD_MONSTER_SUMMONING_IV
-    SAY NAME1 @928
-    SAY UNIDENTIFIED_DESC @929
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/SPWI828.spl~ ~override~ // WIZARD_MONSTER_SUMMONING_V
-    SAY NAME1 @930
-    SAY UNIDENTIFIED_DESC @931
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/SPWI968.spl~ ~override~ // WIZARD_MONSTER_SUMMONING_VI
-    SAY NAME1 @932
-    SAY UNIDENTIFIED_DESC @933
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/SCRX17.itm~           ~override~
-    SAY DESC @929
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/SCRX24.itm~           ~override~
-    SAY DESC @931
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/SCRX34.itm~           ~override~
-    SAY DESC @933
-
-  COPY ~%MOD_FOLDER%/Compat/TDD/BAM~ ~override~
-END
-
-//***********************************************************************************
 // Unnamed spells
 //***********************************************************************************
 

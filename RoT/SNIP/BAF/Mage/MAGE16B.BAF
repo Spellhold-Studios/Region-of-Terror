@@ -100,7 +100,7 @@ IF
 	Global("Spell3","LOCALS",0)
 THEN
 	RESPONSE #100
-		ForceSpell(Myself,WIZARD_MONSTER_SUMMONING_VI)
+		ForceSpellRES("RTWI968",Myself)
 		SetGlobal("Spell3","LOCALS",1)
 END
 
