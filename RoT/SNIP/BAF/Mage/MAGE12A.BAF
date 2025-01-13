@@ -12,7 +12,7 @@ IF
 THEN
 	RESPONSE #100
 		SetGlobal("Behavior","LOCALS",1)
-		ForceSpell(NearestEnemyOf(Myself),WIZARD_MONSTER_SUMMONING_IV)
+		ForceSpellRES("RTWI733",NearestEnemyOf(Myself))
 END
 
 IF

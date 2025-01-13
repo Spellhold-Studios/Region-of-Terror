@@ -142,7 +142,7 @@ IF
 	GlobalLT("Spell1","LOCALS",1)
 THEN
 	RESPONSE #100
-		ForceSpell(NearestEnemyOf(Myself),WIZARD_MONSTER_SUMMONING_IV)
+		ForceSpellRES("RTWI733",NearestEnemyOf(Myself))
 		IncrementGlobal("Spell1","LOCALS",1)
 END
 

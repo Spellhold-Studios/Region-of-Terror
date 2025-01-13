@@ -1,4 +1,4 @@
-BACKUP ~weidu_external/rot/backup~
+BACKUP ~weidu_external/backup/RoT~
 
 //AUTHOR ~Gilgamesh, King Diamond (WeiDU conversion)~ NO_IF_EVAL_BUG
 SUPPORT ~http://www.shsforums.net/forum/168-region-of-terror/ or https://github.com/SpellholdStudios/Region_of_Terror~
@@ -7,23 +7,31 @@ VERSION ~v5.0~
 
 README ~rot/readme/rot-readme-%LANGUAGE%.html~ ~rot/readme/rot-readme-%LANGUAGE%.txt~ ~rot/readme/rot-readme-english.html~
 
-AUTO_TRA ~RoT/Language/%s~
+ASK_EVERY_COMPONENT
 
 ALWAYS
-  ACTION_IF (GAME_IS ~eet~) BEGIN
-    OUTER_SET bg2_chapter = 12
-  END ELSE BEGIN
-    OUTER_SET bg2_chapter = 0
-  END
-  OUTER_FOR (i=1; i<=10; i=i+1) BEGIN
-    OUTER_SET bg2_chapter = bg2_chapter + 1
-    OUTER_SPRINT name_source ~bg2_chapter_%i%~
-    OUTER_SET EVAL ~%name_source%~ = bg2_chapter
-  END
-  // Convert strings to UTF-8 for Enhanced Edition
 
-  // setup.tra needs to be reloaded after conversion
-  
+	ACTION_IF GAME_IS ~bgt soa tob~ BEGIN
+	      OUTER_SPRINT engine ~non-ee~
+	  END 
+	ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
+	      OUTER_SPRINT engine ~ee~
+	  END
+	
+	OUTER_SPRINT workspace "weidu_external/workspace/%MOD_FOLDER%"
+		MKDIR "%workspace%"
+		
+	ACTION_IF (GAME_IS ~eet~) BEGIN
+		OUTER_SET bg2_chapter = 12
+	END ELSE BEGIN
+		OUTER_SET bg2_chapter = 0
+	END
+	OUTER_FOR (i=1; i<=10; i=i+1) BEGIN
+		OUTER_SET bg2_chapter = bg2_chapter + 1
+		OUTER_SPRINT name_source ~bg2_chapter_%i%~
+		OUTER_SET EVAL ~%name_source%~ = bg2_chapter
+	END
+	
 <<<<<<<< .../blank.txt
 >>>>>>>>
 	ACTION_IF ~%WEIDU_OS%~ STRING_EQUAL_CASE ~win32~ BEGIN
@@ -35,58 +43,66 @@ ALWAYS
 		OUTER_SPRINT exe ~~
 		OUTER_SPRINT WEIDU_EXECUTABLE ~.RoT/weidu~
 	END
-	OUTER_SPRINT ~tileconv~ ~RoT%os_slash%bin%os_slash%%WEIDU_OS%%os_slash%tileconv%exe%~
+	ACTION_IF NOT VARIABLE_IS_SET one_time_execution THEN BEGIN // check to make this happen only once per install
+		OUTER_SET one_time_execution = 1
 	
-	ACTION_IF ENGINE_IS ~bgee bg2ee~ BEGIN
-		COPY - ~weidu.conf~ ~.../weidu.conf~
-			READ_2DA_ENTRY 0 2 3 "lang_dir"
-		ACTION_IF NOT ~%LANGUAGE%~ STR_EQ ~english~ BEGIN
-			ACTION_DEFINE_ASSOCIATIVE_ARRAY charsetsTable BEGIN
-				"german" => "CP1252"
-				"english" => "CP1252"
-				"french" => "CP1252"
-				"italian" => "CP1252"
-				"polish" => "CP1250"
-				"russian" => "CP1251"
-				"castilian" => "CP1252"
-				"spanish" => "CP1252"
-			    "schinese" => "CP936"
-			END
-			ACTION_DEFINE_ARRAY charsetsReloadArray BEGIN setup scripts journal END
-			ACTION_DEFINE_ARRAY charsetsNoConvertArray BEGIN install setup-ee END
-			LAF ~HANDLE_CHARSETS~
-				INT_VAR
-				infer_charsets = 0
-				STR_VAR
-				tra_path = "RoT/language"
-				iconv_path = "RoT/bin/win32/iconv" //available as part of the base system on OS X and GNU/Linux
-				charset_table = charsetsTable
+		// define variable for HANDLE_CHARSETS out_path so it can be reused later
+		OUTER_TEXT_SPRINT "HANDLE_CHARSETS_OUT_PATH" EVAL "weidu_external/Language/%MOD_FOLDER%"
+		// do not convert Setup.tra files, those should be UTF8 already
+		ACTION_DEFINE_ARRAY charsetsNoConvertArray BEGIN END // List of tra files that contain ONLY strings for the WeiDU installer and NOT game content
+		ACTION_DEFINE_ARRAY charsetsReloadArray BEGIN setup scripts journal END // List of tra files that need to be reloaded after conversion because they were previously loaded in the LANGUAGE section
+		// On EE games, convert game content tra files to utf-8 so that games don't crash when encountering international characters.
+		LAF HANDLE_CHARSETS
+			INT_VAR
+				from_utf8 = 1
+				infer_charsets = 1
+				verbose = 1 // you can disable this if you want to skip verbose output
+			STR_VAR
+				default_language = ~English~
+				tra_path = EVAL "%MOD_FOLDER%/language"
+				out_path = EVAL "%HANDLE_CHARSETS_OUT_PATH%" // location of converted .tra files
+				iconv_path = EVAL "%MOD_FOLDER%/Tools/iconv" //available as part of the base system on OS X and GNU/Linux
 				reload_array = charsetsReloadArray
 				noconvert_array = charsetsNoConvertArray
-			END
 		END
-		COPY ~%MOD_FOLDER%/Worldmap/%LANGUAGE%/fl#utf8_worldmap.tra~ ~%MOD_FOLDER%/Worldmap/%LANGUAGE%/worldmap.tra~
-		LOAD_TRA ~RoT/language/%LANGUAGE%/setup-ee.tra~
+		// for AUTO_TRA: if the game is the enhanced edition, the conversion will not happen so all .tra files should be loaded from "%MOD_FOLDER%/Language"
+		ACTION_IF (GAME_IS "bgee bg2ee eet iwdee pstee") THEN BEGIN
+			OUTER_TEXT_SPRINT "TRA_LOCATION" EVAL "%MOD_FOLDER%/Language"
+			PRINT ~UTF-8~
+		END
+	
+		// for AUTO_TRA: if the game is the classic edition, all converted .tra files will be loaded from HANDLE_CHARSETS out_path
+		ACTION_IF NOT (GAME_IS "bgee bg2ee eet iwdee pstee") THEN BEGIN
+			OUTER_TEXT_SPRINT "TRA_LOCATION" EVAL "%HANDLE_CHARSETS_OUT_PATH%"
+			PRINT ~ANSI~
+		END
+		// load ee-like item desctiptions
+		ACTION_IF GAME_IS ~bgee bg2ee eet iwdee pstee~ THEN BEGIN
+			LOAD_TRA ~%MOD_FOLDER%/Language/%LANGUAGE%/setup-ee.tra~
+		END
 	END
+	
 END
 
+AUTO_TRA "%TRA_LOCATION%/%s"
+
 LANGUAGE ~English~
-         ~English~
-         ~RoT/Language/English/scripts.tra~
-         ~RoT/Language/English/journal.tra~
-         ~RoT/Language/English/setup.tra~
+	       ~English~
+	       ~RoT/Language/English/scripts.tra~
+	       ~RoT/Language/English/journal.tra~
+	       ~RoT/Language/English/setup.tra~
 
 LANGUAGE ~Russian (translation by aerie-ru.info team)~
-         ~Russian~
-         ~RoT/Language/Russian/scripts.tra~
-         ~RoT/Language/Russian/journal.tra~
-         ~RoT/Language/Russian/setup.tra~
+	       ~Russian~
+	       ~RoT/Language/Russian/scripts.tra~
+	       ~RoT/Language/Russian/journal.tra~
+	       ~RoT/Language/Russian/setup.tra~
 
 LANGUAGE ~Deutsch (Uebersetzung von Gerri, Telperion, Leonardo Watson)~
-         ~German~
-         ~RoT/Language/German/scripts.tra~
-         ~RoT/Language/German/journal.tra~
-         ~RoT/Language/German/setup.tra~
+	       ~German~
+	       ~RoT/Language/German/scripts.tra~
+	       ~RoT/Language/German/journal.tra~
+	       ~RoT/Language/German/setup.tra~
 
 LANGUAGE ~Espanol~
 		 ~Spanish~
@@ -100,62 +116,49 @@ LANGUAGE ~Simplified Chinese (retranslation By Lzw104522773)~
 		 ~RoT/Language/schinese/scripts.tra~
 		 ~RoT/Language/schinese/journal.tra~
 		 ~RoT/Language/schinese/setup.tra~
-		 ~RoT/Language/schinese/install.tra~
+//		 ~RoT/Language/schinese/install.tra~
 
-/* =================================== *
- *  Region of Terror : main component  *
- * =================================== */
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Region of Terror : main component                \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
 BEGIN @0
 DESIGNATED 0 LABEL ~region_of_terror~
 
-ADD_JOURNAL @500000 @574337 @574338 @566095 @569174 @569173 @576186 @568920 @569177 @569178 @564128 @572810 @572811 @572812 @572896 @572897 @572898 @572899 @572903 @571685 @571235 @571236 @571237 @566097 @566098 @566099 @568192 @568205 @568220 @568198 @568221 @568222 @566428 @571711 @571709 @571712 @571233 @567005 @574058 @574059 @574061 @566094 @574781 @564316 @563195 @566096 @566101 @572915 @571803 @571802 @571801 @575862 @571806 @571805 @568695 @568867 @568877 @568875 @568873 @568881 @568882 @568689 @566100 @575863 @570608 @570607 @570609 @568545 @568546 @568549 @568263 @568281 @564865 @570462 @570505 @566652 @566653 @565530 @565533 @565536 @565656 @565655 @566285 @565653 @566284 @563941 @563943 @570748 @570736 @566785 @566784 @567011 @566777 @566781 @566782 @566783 @576084 @576086 @576185 @563708 @563712 @573330 @574055 @574056 @574057 @572659 @572660 @572661 @572662 @572663 @572664 @572666 @572670 @567010 @566564 @566565 @566566 @564221 @564220 @570734 @564219 @564130 @576012 @564701 @574048 @574049 @574051 @574050 @574052 @564415 @564299 @564301 @567006 @567008 @565535 @565529 @572863 @572864 @568691 @571713 @571714 @567009 @564132 @564131 @564129 @570606 @569184 @573242 @565641 @571675 @571676 @571677 @571680 @571678 @571681 @573244 @563001 @573245 @573243 @572917 @575059 @575061 @575062 @576184 @573332 USING ~RoT/language/%LANGUAGE%/journal.tra~
+ADD_JOURNAL @500000 @574337 @574338 @566095 @569174 @569173 @576186 @568920 @569177 @569178 @564128 @572810 @572811 @572812 @572896 @572897 @572898 @572899 @572903 @571685 @571235 @571236 @571237 @566097 @566098 @566099 @568192 @568205 @568220 @568198 @568221 @568222 @566428 @571711 @571709 @571712 @571233 @567005 @574058 @574059 @574061 @566094 @574781 @564316 @563195 @566096 @566101 @572915 @571803 @571802 @571801 @575862 @571806 @571805 @568695 @568867 @568877 @568875 @568873 @568881 @568882 @568689 @566100 @575863 @570608 @570607 @570609 @568545 @568546 @568549 @568263 @568281 @564865 @570462 @570505 @566652 @566653 @565530 @565533 @565536 @565656 @565655 @566285 @565653 @566284 @563941 @563943 @570748 @570736 @566785 @566784 @567011 @566777 @566781 @566782 @566783 @576084 @576086 @576185 @563708 @563712 @573330 @574055 @574056 @574057 @572659 @572660 @572661 @572662 @572663 @572664 @572666 @572670 @567010 @566564 @566565 @566566 @564221 @564220 @570734 @564219 @564130 @576012 @564701 @574048 @574049 @574051 @574050 @574052 @564415 @564299 @564301 @567006 @567008 @565535 @565529 @572863 @572864 @568691 @571713 @571714 @567009 @564132 @564131 @564129 @570606 @569184 @573242 @565641 @571675 @571676 @571677 @571680 @571678 @571681 @573244 @563001 @573245 @573243 @572917 @575059 @575061 @575062 @576184 @573332 USING ~%TRA_LOCATION%/journal.tra~
 
 ACTION_IF (GAME_IS ~bg2 tob bgt~) BEGIN
-	COPY + ~chitin.key~        ~RoT/chitin.rot~
-	ACTION_FOR_EACH var IN ~~ F BEGIN
-		ACTION_IF FILE_EXISTS ~dialog%var%.tlk~ BEGIN
-			COPY_LARGE + ~dialog%var%.tlk~ ~RoT/dialog%var%.rot~
-		END
-	END
-	MKDIR ~RoT/over.bak~
-	COPY_LARGE + ~override~      ~RoT/over.bak~
-		
 	INCLUDE ~%MOD_FOLDER%/lib/install-guititle.tpa~
 	PRINT @3
 END
 
 COPY_EXISTING ~misc01.itm~ ~override/rot.mrk~ // tell other mod that region of terror is installed
 
-APPEND ~SPELL.IDS~ ~2140 WIZARD_EAGLES_SPLENDOR~      //sharing with CtB
- UNLESS ~2140 WIZARD_EAGLES_SPLENDOR~
-APPEND ~SPELL.IDS~ ~2733 WIZARD_MONSTER_SUMMONING_IV~ //sharing with TDD
- UNLESS ~2733 WIZARD_MONSTER_SUMMONING_IV~
-APPEND ~SPELL.IDS~ ~2828 WIZARD_MONSTER_SUMMONING_V~  //sharing with TDD
- UNLESS ~2828 WIZARD_MONSTER_SUMMONING_V~
-APPEND ~SPELL.IDS~ ~2968 WIZARD_MONSTER_SUMMONING_VI~ //sharing with TDD
- UNLESS ~2968 WIZARD_MONSTER_SUMMONING_VI~
-
 PRINT @4
 
-ADD_PROJECTILE ~RoT/PRO/AQUADRGN.PRO~
-ADD_PROJECTILE ~RoT/PRO/BLAARROW.PRO~
-ADD_PROJECTILE ~RoT/PRO/BLUBLAST.PRO~
-ADD_PROJECTILE ~RoT/PRO/BLUEDRGN.PRO~
-ADD_PROJECTILE ~RoT/PRO/BLUERAIN.PRO~
-ADD_PROJECTILE ~RoT/PRO/BRWNDRGN.PRO~
-ADD_PROJECTILE ~RoT/PRO/BRWNHIT.PRO~
-ADD_PROJECTILE ~RoT/PRO/BULLIC.PRO~
-ADD_PROJECTILE ~RoT/PRO/BULLLI.PRO~
-ADD_PROJECTILE ~RoT/PRO/BURGAS.PRO~
-ADD_PROJECTILE ~RoT/PRO/DEAARROW.PRO~
-ADD_PROJECTILE ~RoT/PRO/DIAARROW.PRO~
-ADD_PROJECTILE ~RoT/PRO/DOOMSDAY.PRO~
-ADD_PROJECTILE ~RoT/PRO/GLDKILL2.PRO~
-ADD_PROJECTILE ~RoT/PRO/GOLDBRE.PRO~
-ADD_PROJECTILE ~RoT/PRO/GREBLAST.PRO~
-ADD_PROJECTILE ~RoT/PRO/GRENDRGN.PRO~
-ADD_PROJECTILE ~RoT/PRO/ICEEXPL.PRO~
-ADD_PROJECTILE ~RoT/PRO/MYARROW.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/AQUADRGN.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BLAARROW.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BLUBLAST.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BLUEDRGN.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BLUERAIN.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BRWNDRGN.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BRWNHIT.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BULLIC.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BULLLI.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/BURGAS.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/DEAARROW.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/DIAARROW.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/DOOMSDAY.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/GLDKILL2.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/GOLDBRE.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/GREBLAST.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/GRENDRGN.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/ICEEXPL.PRO~
+ADD_PROJECTILE ~%MOD_FOLDER%/PRO/MYARROW.PRO~
 
 
 // new state needed to fix Dead() triggers that don't use DVs
@@ -171,6 +174,22 @@ APPEND ~GTIMES.IDS~ ~1800 SIX_HOURS~
 APPEND ~GTIMES.IDS~ ~2400 EIGHT_HOURS~
 	UNLESS ~2400 EIGHT_HOURS~
 
+ACTION_IF (GAME_IS ~tob bgt~) BEGIN
+    APPEND ~TRIGGER.IDS~ ~0x00A1 SpellCastOnMeRES(S:Spell*,O:Caster*)~
+                  UNLESS ~0x00A1 SpellCastOnMeRES(S:Spell\*,O:Caster\*)~
+    APPEND ~TRIGGER.IDS~ ~0x0091 SpellCastRES(S:Spell*,O:Object*)~
+                  UNLESS ~0x0091 SpellCastRES(S:Spell\*,O:Object\*)~
+    APPEND ~TRIGGER.IDS~ ~0x00A6 SpellCastPriestRES(S:Spell*,O:Object*)~
+                  UNLESS ~0x00A6 SpellCastPriestRES(S:Spell\*,O:Object\*)~
+    APPEND ~TRIGGER.IDS~ ~0x00A7 SpellCastInnateRES(S:Spell*,O:Object*)~
+                  UNLESS ~0x00A7 SpellCastInnateRES(S:Spell\*,O:Object\*)~
+    APPEND ~TRIGGER.IDS~ ~0x4031 HaveSpellRES(S:Spell*)~
+                  UNLESS ~0x4031 HaveSpellRES(S:Spell\*)~
+    APPEND ~TRIGGER.IDS~ ~0x40D5 ActuallyInCombat()~
+                  UNLESS ~0x40D5 ActuallyInCombat()~
+END
+CLEAR_IDS_MAP
+
 ACTION_IF (GAME_IS ~bg2 tob bgt~) BEGIN
 	ACTION_IF FILE_EXISTS ~script compiler/AICompile.exe~ THEN BEGIN
 	COPY_EXISTING ~PROJECTL.IDS~   ~script compiler~
@@ -185,7 +204,7 @@ END
 //***********************************************************************************
 PRINT @5
 
-INCLUDE ~RoT/lib/tooltip.tpa~
+INCLUDE ~%MOD_FOLDER%/lib/tooltip.tpa~
 LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~ACIDAX~   tooltips = ~@8 12033~ END
 LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~AEGISFA~  tooltips = ~15527 15529~ END
 LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~ASSDAGG~  tooltips = ~15529 15527~ END
@@ -207,24 +226,24 @@ LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~NEWSTF03~ tooltips = ~@10 39853 25914 25
 LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~NEWSWB01~ tooltips = ~@11 16946 35553~ END
 LAF ~ADD_ITEM_TOOLTIPS~ STR_VAR item = ~NEWSWT01~ tooltips = ~@12 13080 14264 17320 14260~ END
 
-COPY ~RoT/2DA/SCRTXT09.2DA~ ~override~
- REPLACE ~76190~ @13
- REPLACE ~76191~ @14
+COPY ~%MOD_FOLDER%/2DA/SCRTXT09.2DA~ ~override~
+	REPLACE ~76190~ @13
+	REPLACE ~76191~ @14
 
-COPY ~RoT/2DA/SCRTXT10.2DA~ ~override~
- REPLACE ~76195~ @13
- REPLACE ~76196~ @15
+COPY ~%MOD_FOLDER%/2DA/SCRTXT10.2DA~ ~override~
+	REPLACE ~76195~ @13
+	REPLACE ~76196~ @15
 
-COPY ~RoT/2DA/SCRTXT11.2DA~ ~override~
- REPLACE ~76197~ @16
- REPLACE ~76198~ @17
+COPY ~%MOD_FOLDER%/2DA/SCRTXT11.2DA~ ~override~
+	REPLACE ~76197~ @16
+	REPLACE ~76198~ @17
 
-COPY ~RoT/2DA/SCRTXT12.2DA~ ~override~
- REPLACE ~76199~ @16
- REPLACE ~76203~ @18
+COPY ~%MOD_FOLDER%/2DA/SCRTXT12.2DA~ ~override~
+	REPLACE ~76199~ @16
+	REPLACE ~76203~ @18
 
 ACTION_IF (GAME_IS ~bg2 tob bgt~) BEGIN 
-	COPY ~RoT/2DA/XPLEVEL.2da~ ~override~   //TDD version
+	COPY ~%MOD_FOLDER%/2DA/XPLEVEL.2da~ ~override~   //TDD version
 END
 
 APPEND ~INTERDIA.2DA~
@@ -241,7 +260,7 @@ Alissa1	    BAlissa1
 Mordrg	    BMordrg~
 
 APPEND ~ITEMDIAL.2DA~ ~SoulArmr      5689   SoulArmr~
- UNLESS ~SoulArmr~
+	UNLESS ~SoulArmr~
 
 APPEND ~MASTAREA.2DA~
 ~RR3100  value
@@ -296,7 +315,7 @@ Mordrg       MordrgP            MordrgJ           ***           MordrgP         
 // Level 50 Rules
 //***********************************************************************************
 ACTION_IF (GAME_IS ~bg2 tob bgt~) BEGIN
-	INCLUDE ~RoT/lib/install-level50-rules.tpa~
+	INCLUDE ~%MOD_FOLDER%/lib/install-level50-rules.tpa~
 END
 
 //***********************************************************************************
@@ -304,245 +323,245 @@ END
 //***********************************************************************************
 PRINT @24
 
-COPY ~RoT/are/nostring~    ~override~
+COPY ~%MOD_FOLDER%/are/nostring~    ~override~
 
-COPY ~RoT/are/string/RA3010.ARE~    ~override~
-  SAY 0x290 @25
+COPY ~%MOD_FOLDER%/are/string/RA3010.ARE~    ~override~
+	SAY 0x290 @25
 
-COPY ~RoT/are/string/RA3013.ARE~    ~override~
-  SAY 0x2f68 @26
-  SAY 0x302c @26
-  SAY 0x30f0 @26
-  SAY 0x31b4 @26
-  SAY 0x3278 @26
-  SAY 0x333c @26
-  SAY 0x3400 @26
-  SAY 0x34c4 @27
-  SAY 0x3588 @26
-  SAY 0x364c @26
-  SAY 0x3710 @26
-  SAY 0x37d4 @26
-  SAY 0x3898 @26
-  SAY 0x395c @26
-  SAY 0x3a20 @26
-  SAY 0x3ae4 @28
+COPY ~%MOD_FOLDER%/are/string/RA3013.ARE~    ~override~
+	SAY 0x2f68 @26
+	SAY 0x302c @26
+	SAY 0x30f0 @26
+	SAY 0x31b4 @26
+	SAY 0x3278 @26
+	SAY 0x333c @26
+	SAY 0x3400 @26
+	SAY 0x34c4 @27
+	SAY 0x3588 @26
+	SAY 0x364c @26
+	SAY 0x3710 @26
+	SAY 0x37d4 @26
+	SAY 0x3898 @26
+	SAY 0x395c @26
+	SAY 0x3a20 @26
+	SAY 0x3ae4 @28
 
-COPY ~RoT/are/string/ra3014.are~    ~override~
-  SAY 0x180 @29
-  SAY 0x244 @29
+COPY ~%MOD_FOLDER%/are/string/ra3014.are~    ~override~
+	SAY 0x180 @29
+	SAY 0x244 @29
 
-COPY ~RoT/are/string/RA3703.are~    ~override~
-  SAY 0x2948 @30
-  SAY 0x2a0c @31
-  SAY 0x2ad0 @32
+COPY ~%MOD_FOLDER%/are/string/RA3703.are~    ~override~
+	SAY 0x2948 @30
+	SAY 0x2a0c @31
+	SAY 0x2ad0 @32
 
-COPY ~RoT/are/string/RA3705.are~    ~override~
-  SAY 0x2ee4 @33
+COPY ~%MOD_FOLDER%/are/string/RA3705.are~    ~override~
+	SAY 0x2ee4 @33
 
-COPY ~RoT/are/string/RA3707.are~    ~override~
-  SAY 0xa00 @34
+COPY ~%MOD_FOLDER%/are/string/RA3707.are~    ~override~
+	SAY 0xa00 @34
 
-COPY ~RoT/are/string/RA3709.are~    ~override~
-  SAY 0x1bf0 @35
-  SAY 0x1cb4 @35
-  SAY 0x1d78 @36
-  SAY 0x1e3c @36
-  SAY 0x1f00 @37
+COPY ~%MOD_FOLDER%/are/string/RA3709.are~    ~override~
+	SAY 0x1bf0 @35
+	SAY 0x1cb4 @35
+	SAY 0x1d78 @36
+	SAY 0x1e3c @36
+	SAY 0x1f00 @37
 
-COPY ~RoT/are/string/RA3710.are~    ~override~
-  SAY 0x19a4 @34
-  SAY 0x1a68 @38
+COPY ~%MOD_FOLDER%/are/string/RA3710.are~    ~override~
+	SAY 0x19a4 @34
+	SAY 0x1a68 @38
 
-COPY ~RoT/are/string/ra4200.are~    ~override~
-  SAY 0x26b0 @39
-  SAY 0x2774 @40
-  SAY 0x2838 @41
+COPY ~%MOD_FOLDER%/are/string/ra4200.are~    ~override~
+	SAY 0x26b0 @39
+	SAY 0x2774 @40
+	SAY 0x2838 @41
 
-COPY ~RoT/are/string/ra4202.are~    ~override~
-  SAY 0x574 @42
+COPY ~%MOD_FOLDER%/are/string/ra4202.are~    ~override~
+	SAY 0x574 @42
 
-COPY ~RoT/are/string/ra4300.are~    ~override~
-  SAY 0x3d78 @43
-  SAY 0x3e3c @43
+COPY ~%MOD_FOLDER%/are/string/ra4300.are~    ~override~
+	SAY 0x3d78 @43
+	SAY 0x3e3c @43
 
-COPY ~RoT/are/string/RA4301.are~    ~override~
-  SAY 0x5c0 @43
-  SAY 0x684 @43
+COPY ~%MOD_FOLDER%/are/string/RA4301.are~    ~override~
+	SAY 0x5c0 @43
+	SAY 0x684 @43
 
-COPY ~RoT/are/string/ra4303.are~    ~override~
-  SAY 0x290 @44
+COPY ~%MOD_FOLDER%/are/string/ra4303.are~    ~override~
+	SAY 0x290 @44
 
-COPY ~RoT/are/string/ra4304.are~    ~override~
-  SAY 0x290 @44
-  SAY 0x354 @44
+COPY ~%MOD_FOLDER%/are/string/ra4304.are~    ~override~
+	SAY 0x290 @44
+	SAY 0x354 @44
 
-COPY ~RoT/are/string/ra4305.are~    ~override~
-  SAY 0x4b0 @45
-  SAY 0x574 @45
-  SAY 0x638 @44
-  SAY 0x6fc @44
+COPY ~%MOD_FOLDER%/are/string/ra4305.are~    ~override~
+	SAY 0x4b0 @45
+	SAY 0x574 @45
+	SAY 0x638 @44
+	SAY 0x6fc @44
 
-COPY ~RoT/are/string/ra4401.are~    ~override~
-  SAY 0x14cc @46
-  SAY 0x1590 @47
-  SAY 0x1654 @48
-  SAY 0x1718 @49
-  SAY 0x17dc @50
-  SAY 0x18a0 @51
-  SAY 0x1964 @52
-  SAY 0x1a28 @53
-  SAY 0x1aec @54
-  SAY 0x1bb0 @54
-  SAY 0x1c74 @55
-  SAY 0x1d38 @56
+COPY ~%MOD_FOLDER%/are/string/ra4401.are~    ~override~
+	SAY 0x14cc @46
+	SAY 0x1590 @47
+	SAY 0x1654 @48
+	SAY 0x1718 @49
+	SAY 0x17dc @50
+	SAY 0x18a0 @51
+	SAY 0x1964 @52
+	SAY 0x1a28 @53
+	SAY 0x1aec @54
+	SAY 0x1bb0 @54
+	SAY 0x1c74 @55
+	SAY 0x1d38 @56
 
-COPY ~RoT/are/string/ra4402.are~    ~override~
-  SAY 0x858 @57
-  SAY 0x91c @57
-  SAY 0x9e0 @58
-  SAY 0xaa4 @59
-  SAY 0xb68 @60
-  SAY 0xc2c @61
-  SAY 0xcf0 @62
+COPY ~%MOD_FOLDER%/are/string/ra4402.are~    ~override~
+	SAY 0x858 @57
+	SAY 0x91c @57
+	SAY 0x9e0 @58
+	SAY 0xaa4 @59
+	SAY 0xb68 @60
+	SAY 0xc2c @61
+	SAY 0xcf0 @62
 
-COPY ~RoT/are/string/ra4701.are~    ~override~
-  SAY 0x1fb8 @63
+COPY ~%MOD_FOLDER%/are/string/ra4701.are~    ~override~
+	SAY 0x1fb8 @63
 
-COPY ~RoT/are/string/ra4900.are~    ~override~
-  SAY 0x244 @64
+COPY ~%MOD_FOLDER%/are/string/ra4900.are~    ~override~
+	SAY 0x244 @64
 
-COPY ~RoT/are/string/RA5000.are~    ~override~
-  SAY 0x1bf0 @65
-  SAY 0x1cb4 @66
-  SAY 0x1d78 @66
-  SAY 0x1e3c @66
-  SAY 0x1f00 @66
-  SAY 0x1fc4 @67
+COPY ~%MOD_FOLDER%/are/string/RA5000.are~    ~override~
+	SAY 0x1bf0 @65
+	SAY 0x1cb4 @66
+	SAY 0x1d78 @66
+	SAY 0x1e3c @66
+	SAY 0x1f00 @66
+	SAY 0x1fc4 @67
 
-COPY ~RoT/are/string/RA5001.are~    ~override~
-  SAY 0x45ac @68
+COPY ~%MOD_FOLDER%/are/string/RA5001.are~    ~override~
+	SAY 0x45ac @68
 
-COPY ~RoT/are/string/RA5003.are~    ~override~
-  SAY 0x1c88 @69
+COPY ~%MOD_FOLDER%/are/string/RA5003.are~    ~override~
+	SAY 0x1c88 @69
 
-COPY ~RoT/are/string/RA5401.are~    ~override~
-  SAY 0x47a0 @70
+COPY ~%MOD_FOLDER%/are/string/RA5401.are~    ~override~
+	SAY 0x47a0 @70
 
-COPY ~RoT/are/string/RA5412.are~    ~override~
-  SAY 0x2490 @71
-  SAY 0x2554 @72
+COPY ~%MOD_FOLDER%/are/string/RA5412.are~    ~override~
+	SAY 0x2490 @71
+	SAY 0x2554 @72
 
-COPY ~RoT/are/string/RA5414.are~    ~override~
-  SAY 0x180 @73
+COPY ~%MOD_FOLDER%/are/string/RA5414.are~    ~override~
+	SAY 0x180 @73
 
-COPY ~RoT/are/string/RA5601.are~    ~override~
-  SAY 0x3ed4 @74
+COPY ~%MOD_FOLDER%/are/string/RA5601.are~    ~override~
+	SAY 0x3ed4 @74
 
-COPY ~RoT/are/string/RA5602.are~    ~override~
-  SAY 0x5990 @75
-  SAY 0x5bdc @76
+COPY ~%MOD_FOLDER%/are/string/RA5602.are~    ~override~
+	SAY 0x5990 @75
+	SAY 0x5bdc @76
 
-COPY ~RoT/are/string/rr3100.are~    ~override~
-  SAY 0x81c0 @77
-  SAY 0x81f4 @78
-  SAY 0x8228 @79
-  SAY 0x82c4 @80
-  SAY 0x82f8 @80
-  SAY 0x832c @81
-  SAY 0x8360 @82
-  SAY 0x8394 @83
-  SAY 0x83c8 @84
+COPY ~%MOD_FOLDER%/are/string/rr3100.are~    ~override~
+	SAY 0x81c0 @77
+	SAY 0x81f4 @78
+	SAY 0x8228 @79
+	SAY 0x82c4 @80
+	SAY 0x82f8 @80
+	SAY 0x832c @81
+	SAY 0x8360 @82
+	SAY 0x8394 @83
+	SAY 0x83c8 @84
 
-COPY ~RoT/are/string/rr3106.are~    ~override~
-  SAY 0x180 @85
+COPY ~%MOD_FOLDER%/are/string/rr3106.are~    ~override~
+	SAY 0x180 @85
 
-COPY ~RoT/are/string/rr3115.are~    ~override~
-  SAY 0x574 @86
+COPY ~%MOD_FOLDER%/are/string/rr3115.are~    ~override~
+	SAY 0x574 @86
 
-COPY ~RoT/are/string/rr3119.are~    ~override~
-  SAY 0x7e0 @87
+COPY ~%MOD_FOLDER%/are/string/rr3119.are~    ~override~
+	SAY 0x7e0 @87
 
-COPY ~RoT/are/string/rr3150.are~    ~override~
-  SAY 0xe6c @88
-  SAY 0xf30 @88
-  SAY 0xff4 @88
-  SAY 0x10b8 @88
-  SAY 0x117c @88
-  SAY 0x1240 @88
+COPY ~%MOD_FOLDER%/are/string/rr3150.are~    ~override~
+	SAY 0xe6c @88
+	SAY 0xf30 @88
+	SAY 0xff4 @88
+	SAY 0x10b8 @88
+	SAY 0x117c @88
+	SAY 0x1240 @88
 
-COPY ~RoT/are/string/rr3300.are~    ~override~
-  SAY 0x28d0 @89
-  SAY 0x2be0 @90
-  SAY 0x3078 @91
+COPY ~%MOD_FOLDER%/are/string/rr3300.are~    ~override~
+	SAY 0x28d0 @89
+	SAY 0x2be0 @90
+	SAY 0x3078 @91
 
-COPY ~RoT/are/string/rr3302.are~    ~override~
-  SAY 0x6d0 @92
-  SAY 0x858 @93
-  SAY 0x9e0 @94
+COPY ~%MOD_FOLDER%/are/string/rr3302.are~    ~override~
+	SAY 0x6d0 @92
+	SAY 0x858 @93
+	SAY 0x9e0 @94
 
-COPY ~RoT/are/string/rr3303.are~    ~override~
-  SAY 0x2490 @95
-  SAY 0x2618 @96
+COPY ~%MOD_FOLDER%/are/string/rr3303.are~    ~override~
+	SAY 0x2490 @95
+	SAY 0x2618 @96
 
-COPY ~RoT/are/string/rr3307.are~    ~override~
-  SAY 0x354 @97
-  SAY 0x418 @97
+COPY ~%MOD_FOLDER%/are/string/rr3307.are~    ~override~
+	SAY 0x354 @97
+	SAY 0x418 @97
 
-COPY ~RoT/are/string/rr3403.are~    ~override~
-  SAY 0xb88 @98
-  SAY 0xc4c @99
+COPY ~%MOD_FOLDER%/are/string/rr3403.are~    ~override~
+	SAY 0xb88 @98
+	SAY 0xc4c @99
 
-COPY ~RoT/are/string/rr3405.are~    ~override~
-  SAY 0x4b0 @100
+COPY ~%MOD_FOLDER%/are/string/rr3405.are~    ~override~
+	SAY 0x4b0 @100
 
-COPY ~RoT/are/string/rr3407.are~    ~override~
-  SAY 0xac4 @101
+COPY ~%MOD_FOLDER%/are/string/rr3407.are~    ~override~
+	SAY 0xac4 @101
 
-COPY ~RoT/are/string/rr3409.are~    ~override~
-  SAY 0x5c0 @102
-  SAY 0x748 @103
+COPY ~%MOD_FOLDER%/are/string/rr3409.are~    ~override~
+	SAY 0x5c0 @102
+	SAY 0x748 @103
 
-COPY ~RoT/are/string/rr3410.are~    ~override~
-  SAY 0xac4 @103
-  SAY 0xb88 @103
-  SAY 0xc4c @103
+COPY ~%MOD_FOLDER%/are/string/rr3410.are~    ~override~
+	SAY 0xac4 @103
+	SAY 0xb88 @103
+	SAY 0xc4c @103
 
-COPY ~RoT/are/string/rr3452.are~    ~override~
-  SAY 0x1ab4 @104
+COPY ~%MOD_FOLDER%/are/string/rr3452.are~    ~override~
+	SAY 0x1ab4 @104
 
-COPY ~RoT/are/string/rr3456.are~    ~override~
-  SAY 0x6d0 @105
+COPY ~%MOD_FOLDER%/are/string/rr3456.are~    ~override~
+	SAY 0x6d0 @105
 
-COPY ~RoT/are/string/rr3702.are~    ~override~
-  SAY 0x9b4 @106
-  SAY 0xa78 @106
-  SAY 0xb3c @106
-  SAY 0xc00 @35
-  SAY 0xcc4 @35
-  SAY 0xd88 @36
-  SAY 0xe4c @36
-  SAY 0xf10 @37
+COPY ~%MOD_FOLDER%/are/string/rr3702.are~    ~override~
+	SAY 0x9b4 @106
+	SAY 0xa78 @106
+	SAY 0xb3c @106
+	SAY 0xc00 @35
+	SAY 0xcc4 @35
+	SAY 0xd88 @36
+	SAY 0xe4c @36
+	SAY 0xf10 @37
 
-COPY ~RoT/are/string/rr4001.are~    ~override~
-  SAY 0x2a58 @107
-  SAY 0x2b1c @108
+COPY ~%MOD_FOLDER%/are/string/rr4001.are~    ~override~
+	SAY 0x2a58 @107
+	SAY 0x2b1c @108
 
-COPY ~RoT/are/string/rr4002.are~    ~override~
-  SAY 0x3a0 @109
-  SAY 0x464 @110
-  SAY 0x528 @110
-  SAY 0x5ec @110
-  SAY 0x6b0 @111
+COPY ~%MOD_FOLDER%/are/string/rr4002.are~    ~override~
+	SAY 0x3a0 @109
+	SAY 0x464 @110
+	SAY 0x528 @110
+	SAY 0x5ec @110
+	SAY 0x6b0 @111
 
 // Files  
-COPY ~RoT\WED~ ~override~
-COPY ~RoT\BAM~ ~override~
-COPY ~RoT\SFX~ ~override~
+COPY ~%MOD_FOLDER%\WED~ ~override~
+COPY ~%MOD_FOLDER%\BAM~ ~override~
+COPY ~%MOD_FOLDER%\SFX~ ~override~
 
-COPY ~RoT\BMP~ ~override~
+COPY ~%MOD_FOLDER%\BMP~ ~override~
 // Replace smaller images with EE quality
 ACTION_IF (GAME_IS ~bg2ee eet~) THEN BEGIN
-	COPY ~RoT\BMP\EE~ ~override~
+	COPY ~%MOD_FOLDER%\BMP\EE~ ~override~
 END
 
 
@@ -551,7 +570,7 @@ END
 //***********************************************************************************
 PRINT @20
 
-COMPILE EVALUATE_BUFFER ~RoT/D~
+COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/D~
 
 
 //***********************************************************************************
@@ -559,58 +578,58 @@ COMPILE EVALUATE_BUFFER ~RoT/D~
 //***********************************************************************************
 PRINT @21
 
-EXTEND_BOTTOM  ~AR0020.BCS~  ~RoT/SNIP/BAF/bAR0020.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0300.BCS~  ~RoT/SNIP/BAF/bAR0300.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0400.BCS~  ~RoT/SNIP/BAF/bAR0400.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0406.BCS~  ~RoT/SNIP/BAF/bAR0406.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0500.BCS~  ~RoT/SNIP/BAF/bAR0500.BAF~
- EVALUATE_BUFFER
-EXTEND_TOP ~AR0509.BCS~ ~RoT/SNIP/BAF/bAR0509.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0522.BCS~  ~RoT/SNIP/BAF/bAR0522.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0020.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0020.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0300.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0300.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0400.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0400.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0406.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0406.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0500.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0500.BAF~
+	EVALUATE_BUFFER
+EXTEND_TOP ~AR0509.BCS~ ~%MOD_FOLDER%/SNIP/BAF/bAR0509.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0522.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0522.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_BOTTOM  ~AR0602.BCS~  ~RoT/SNIP/BAF/bAR0602.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0602.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0602.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_TOP  ~AR0603.BCS~  ~RoT/SNIP/BAF/tAR0603.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR0603.BCS~  ~RoT/SNIP/BAF/bAR0603.BAF~
- EVALUATE_BUFFER
+EXTEND_TOP  ~AR0603.BCS~  ~%MOD_FOLDER%/SNIP/BAF/tAR0603.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR0603.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR0603.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_TOP  ~AR0700.BCS~  ~RoT/SNIP/BAF/tAR0700.BAF~
- EVALUATE_BUFFER
+EXTEND_TOP  ~AR0700.BCS~  ~%MOD_FOLDER%/SNIP/BAF/tAR0700.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_BOTTOM  ~AR1000.BCS~  ~RoT/SNIP/BAF/bAR1000.BAF~
- EVALUATE_BUFFER
-EXTEND_BOTTOM  ~AR1100.BCS~  ~RoT/SNIP/BAF/bAR1100.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR1000.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR1000.BAF~
+	EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR1100.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR1100.BAF~
+	EVALUATE_BUFFER
 
 COPY_EXISTING ~AR1515.BCS~ ~override~
- DECOMPILE_BCS_TO_BAF
- REPLACE_TEXTUALLY ~CreateCreature("pptiax",\[388\.594\],12)[^!]*CreateCreature("ppdradee",\[707\.813\],12)~
+	DECOMPILE_BCS_TO_BAF
+	REPLACE_TEXTUALLY ~CreateCreature("pptiax",\[388\.594\],12)[^!]*CreateCreature("ppdradee",\[707\.813\],12)~
 ~CreateCreature("pptiax",[388.594],12)
 CreateCreature("RanMarc",[674.623],2)
 CreateCreature("ppdradee",[707.813],12)~
- REPLACE_TEXTUALLY ~ActionOverride("ppnalj",DestroySelf())[^!]*ActionOverride("ppaphril",DestroySelf())~
+	REPLACE_TEXTUALLY ~ActionOverride("ppnalj",DestroySelf())[^!]*ActionOverride("ppaphril",DestroySelf())~
 ~ActionOverride("ppnalj",DestroySelf())
 ActionOverride("RanMarc",DestroySelf())
 ActionOverride("ppaphril",DestroySelf())~
- COMPILE_BAF_TO_BCS
+	COMPILE_BAF_TO_BCS
 BUT_ONLY_IF_IT_CHANGES
 
-EXTEND_BOTTOM  ~AR1600.BCS~  ~RoT/SNIP/BAF/bAR1600.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR1600.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR1600.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_TOP  ~AR2000.BCS~  ~RoT/SNIP/BAF/tAR2000.BAF~
- EVALUATE_BUFFER
+EXTEND_TOP  ~AR2000.BCS~  ~%MOD_FOLDER%/SNIP/BAF/tAR2000.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_BOTTOM  ~AR2100.BCS~  ~RoT/SNIP/BAF/bAR2100.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~AR2100.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bAR2100.BAF~
+	EVALUATE_BUFFER
 
 // updating Drizzt encounter
 COPY_EXISTING ~AR2601.BCS~ ~override~
@@ -624,28 +643,34 @@ COPY_EXISTING ~AR2601.BCS~ ~override~
 	END
 
 // overwriting Drizzt encounter
-EXTEND_TOP  ~AR2601.BCS~ ~RoT/SNIP/BAF/AR2601.BAF~ 
+EXTEND_TOP  ~AR2601.BCS~ ~%MOD_FOLDER%/SNIP/BAF/AR2601.BAF~ 
 	EVALUATE_BUFFER
 
-EXTEND_BOTTOM  ~BALDUR.BCS~  ~RoT/SNIP/BAF/bBALDUR.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~BALDUR.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bBALDUR.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_TOP  ~TELE0700.BCS~  ~RoT/SNIP/BAF/tTEL0700.BAF~
- EVALUATE_BUFFER
+EXTEND_TOP  ~TELE0700.BCS~  ~%MOD_FOLDER%/SNIP/BAF/tTEL0700.BAF~
+	EVALUATE_BUFFER
 
-EXTEND_BOTTOM  ~DPLAYER3.BCS~  ~RoT/SNIP/BAF/bDPLR3.BAF~
- EVALUATE_BUFFER
+EXTEND_BOTTOM  ~DPLAYER3.BCS~  ~%MOD_FOLDER%/SNIP/BAF/bDPLR3.BAF~
+	EVALUATE_BUFFER
 
 
 ACTION_IF NOT FILE_EXISTS_IN_GAME ~BPDUEARC.SPL~ THEN BEGIN  //if there's no BP installed
-  COMPILE EVALUATE_BUFFER ~RoT/SNIP/BAF/Mage~
+	COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/SNIP/BAF/Mage~
+	COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/SNIP/BAF/Mage/%engine%~
 END
 
 //***********************************************************************************
 PRINT @22
 
-COMPILE EVALUATE_BUFFER ~RoT/BAF~
-
+COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/BAF~
+// arenama4.baf
+ACTION_IF GAME_IS ~tob bgt eet bg2ee~ BEGIN
+	COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/BAF/ee~
+END ELSE BEGIN
+	COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/BAF/bg2~
+END
 
 //***********************************************************************************
 // Areas
@@ -661,10 +686,10 @@ COPY_EXISTING ~AR0528.ARE~ ~override~
 BUT_ONLY_IF_IT_CHANGES
 
 ACTION_IF NOT FILE_EXISTS_IN_GAME ~AR0528.BCS~ THEN BEGIN
-	COMPILE EVALUATE_BUFFER ~RoT/SNIP/BAF/AR0528.BAF~
+	COMPILE EVALUATE_BUFFER ~%MOD_FOLDER%/SNIP/BAF/AR0528.BAF~
 END
 ELSE BEGIN
-	EXTEND_BOTTOM ~AR0528.BCS~ ~RoT/SNIP/BAF/AR0528.BAF~
+	EXTEND_BOTTOM ~AR0528.BCS~ ~%MOD_FOLDER%/SNIP/BAF/AR0528.BAF~
 		EVALUATE_BUFFER
 END
 
@@ -692,6 +717,21 @@ STRING_SET 16159 @932
 PRINT @925
 INCLUDE ~%MOD_FOLDER%/lib/install-spl.tpa~
 
+COPY ~%MOD_FOLDER%/Compat/CtB/CBWI140.SPL~ ~override~
+		SAY NAME1  @926
+		SAY UNIDENTIFIED_DESC @927
+		
+COPY ~%MOD_FOLDER%/Compat/TDD/RTWI733.SPL~ ~override~
+		SAY NAME1 @928
+		SAY UNIDENTIFIED_DESC @929
+		
+COPY ~%MOD_FOLDER%/Compat/TDD/RTWI828.SPL~ ~override~
+		SAY NAME1 @930
+		SAY UNIDENTIFIED_DESC @931
+		
+COPY ~%MOD_FOLDER%/Compat/TDD/RTWI968.SPL~ ~override~
+		SAY NAME1 @932
+		SAY UNIDENTIFIED_DESC @933
 
 //***********************************************************************************
 // Items
@@ -700,84 +740,99 @@ PRINT @954
 
 INCLUDE ~%MOD_FOLDER%/lib/install-itm.tpa~
 
+	
+	
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX34.itm~    ~override~
+	SAY NAME1 @932
+	  SAY UNIDENTIFIED_DESC @933
+
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX24.itm~    ~override~
+	SAY NAME1 @930
+	SAY UNIDENTIFIED_DESC @931
+
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX17.itm~    ~override~
+	SAY NAME2 @928
+	SAY DESC @929
+
+COPY ~%MOD_FOLDER%/Compat/TDD/BAM~ ~override~
 
 //***********************************************************************************
 // Stores
 //***********************************************************************************
 PRINT @1593
 
-COPY ~RoT/sto/ARENAM2.STO~   ~override~
-     ~RoT/sto/ARLAX1.STO~    ~override~
-     ~RoT/sto/ARLAX2.STO~    ~override~
-     ~RoT/sto/ARLAX3.STO~    ~override~
-     ~RoT/sto/ARLAX4.STO~    ~override~
-     ~RoT/sto/ARLBAR.STO~    ~override~
-     ~RoT/sto/BAG02J.STO~    ~override~
-     ~RoT/sto/BAG03L.STO~    ~override~
-     ~RoT/sto/BAG04B.STO~    ~override~
-     ~RoT/sto/BREMEN1.STO~   ~override~
-     ~RoT/sto/ROEND.STO~     ~override~
-     ~RoT/sto/VIINNKEE.STO~  ~override~
-     ~RoT/sto/VIPOH.STO~     ~override~
-     ~RoT/sto/WECHAD.STO~    ~override~
+COPY ~%MOD_FOLDER%/sto/ARENAM2.STO~   ~override~
+	   ~%MOD_FOLDER%/sto/ARLAX1.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/ARLAX2.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/ARLAX3.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/ARLAX4.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/ARLBAR.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/BAG02J.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/BAG03L.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/BAG04B.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/BREMEN1.STO~   ~override~
+	   ~%MOD_FOLDER%/sto/ROEND.STO~     ~override~
+	   ~%MOD_FOLDER%/sto/VIINNKEE.STO~  ~override~
+	   ~%MOD_FOLDER%/sto/VIPOH.STO~     ~override~
+	   ~%MOD_FOLDER%/sto/WECHAD.STO~    ~override~
 
-COPY ~RoT/sto/ARENAM1.STO~   ~override~
-     ~RoT/sto/POTSELCA.STO~  ~override~
-  SAY NAME2 @698
+COPY ~%MOD_FOLDER%/sto/ARENAM1.STO~   ~override~
+	   ~%MOD_FOLDER%/sto/POTSELCA.STO~  ~override~
+	SAY NAME2 @698
 
-COPY ~RoT/sto/ARLAX5.STO~    ~override~
-  SAY NAME2 @1594
+COPY ~%MOD_FOLDER%/sto/ARLAX5.STO~    ~override~
+	SAY NAME2 @1594
 
-COPY ~RoT/sto/ARLAX6.STO~    ~override~
-  SAY NAME2 @1595
+COPY ~%MOD_FOLDER%/sto/ARLAX6.STO~    ~override~
+	SAY NAME2 @1595
 
-COPY ~RoT/sto/BREMEN2.STO~   ~override~
-  SAY NAME2 @1596 
+COPY ~%MOD_FOLDER%/sto/BREMEN2.STO~   ~override~
+	SAY NAME2 @1596 
 
-COPY ~RoT/sto/BREMEN3.STO~   ~override~
-  SAY NAME2 @1597 
+COPY ~%MOD_FOLDER%/sto/BREMEN3.STO~   ~override~
+	SAY NAME2 @1597 
 
-COPY ~RoT/sto/BRUNDOR.STO~   ~override~        
-  SAY NAME2 @1598 
+COPY ~%MOD_FOLDER%/sto/BRUNDOR.STO~   ~override~        
+	SAY NAME2 @1598 
 
-COPY ~RoT/sto/CULTBE1.STO~   ~override~        
-     ~RoT/sto/CULTBE2.STO~   ~override~
-  SAY NAME2 @1599 
+COPY ~%MOD_FOLDER%/sto/CULTBE1.STO~   ~override~        
+	   ~%MOD_FOLDER%/sto/CULTBE2.STO~   ~override~
+	SAY NAME2 @1599 
 
-COPY ~RoT/sto/EQUSELCA.STO~  ~override~
-  SAY NAME2 @1600 
+COPY ~%MOD_FOLDER%/sto/EQUSELCA.STO~  ~override~
+	SAY NAME2 @1600 
 
-COPY ~RoT/sto/GHESTORE.STO~  ~override~
-  SAY NAME2 @1601
+COPY ~%MOD_FOLDER%/sto/GHESTORE.STO~  ~override~
+	SAY NAME2 @1601
 
-COPY ~RoT/sto/HAMMINN.STO~   ~override~
-  SAY NAME2 @1602 
+COPY ~%MOD_FOLDER%/sto/HAMMINN.STO~   ~override~
+	SAY NAME2 @1602 
 
-COPY ~RoT/sto/KINDAST.STO~   ~override~
-  SAY NAME2 @1603 
+COPY ~%MOD_FOLDER%/sto/KINDAST.STO~   ~override~
+	SAY NAME2 @1603 
 
-COPY ~RoT/sto/OSGIL1.STO~    ~override~
-  SAY NAME2 @1604
+COPY ~%MOD_FOLDER%/sto/OSGIL1.STO~    ~override~
+	SAY NAME2 @1604
 
-COPY ~RoT/sto/OSGIL2.STO~    ~override~         
-  SAY NAME2 @1605 
+COPY ~%MOD_FOLDER%/sto/OSGIL2.STO~    ~override~         
+	SAY NAME2 @1605 
 
-COPY ~RoT/sto/OSGIL3.STO~    ~override~
-  SAY NAME2 @1606 
+COPY ~%MOD_FOLDER%/sto/OSGIL3.STO~    ~override~
+	SAY NAME2 @1606 
 
-COPY ~RoT/sto/SCRLMER.sto~   ~override~
-  SAY NAME2 @787
+COPY ~%MOD_FOLDER%/sto/SCRLMER.sto~   ~override~
+	SAY NAME2 @787
 
-COPY ~RoT/sto/SPESELCA.STO~  ~override~
-  SAY NAME2 @798 
+COPY ~%MOD_FOLDER%/sto/SPESELCA.STO~  ~override~
+	SAY NAME2 @798 
 
-COPY ~RoT/sto/SPIRIT1.STO~   ~override~
-     ~RoT/sto/SPIRIT2.STO~   ~override~
-  SAY NAME2 @16
+COPY ~%MOD_FOLDER%/sto/SPIRIT1.STO~   ~override~
+	   ~%MOD_FOLDER%/sto/SPIRIT2.STO~   ~override~
+	SAY NAME2 @16
 
-COPY ~RoT/sto/WECHAR.STO~    ~override~
-     ~RoT/sto/WECHAR2.STO~   ~override~
-  SAY NAME2 @1607
+COPY ~%MOD_FOLDER%/sto/WECHAR.STO~    ~override~
+	   ~%MOD_FOLDER%/sto/WECHAR2.STO~   ~override~
+	SAY NAME2 @1607
 
 
 //***********************************************************************************
@@ -790,7 +845,7 @@ PRINT @1608
 // CYCLOP animation
 //***********************************************************************************
 ACTION_FOR_EACH var IN 2da wav bam BEGIN
-	ACTION_BASH_FOR ~RoT/anim/Cyclop~ ~^.+\.%var%$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Cyclop~ ~^.+\.%var%$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 			COPY ~%BASH_FOR_FILESPEC%~ ~override~
 		END
@@ -811,7 +866,7 @@ BUT_ONLY_IF_IT_CHANGES
 //***********************************************************************************
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_FOR_EACH var IN wav 2da bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Merilith~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Merilith~ ~^.+\.%var%$~ BEGIN
 			ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
@@ -820,12 +875,12 @@ ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
-	ACTION_BASH_FOR ~RoT/anim/Merilith~ ~^.+\.bam$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Merilith~ ~^.+\.bam$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 			COPY ~%BASH_FOR_FILESPEC%~ ~override~
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Merilith~ ~^.+\.wav$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Merilith~ ~^.+\.wav$~ BEGIN
 		OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 			REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~IWTAN~ ~TANAR~
 		END
@@ -836,15 +891,15 @@ ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 END
 
 COPY_EXISTING ~ASHAM.CRE~    ~override~
-              ~CADDEM14.CRE~ ~override~
-              ~CADDEM6.CRE~  ~override~
-              ~GARMARI1.CRE~ ~override~
-              ~GARMARI2.CRE~ ~override~
-              ~GODMARI1.CRE~ ~override~
-              ~HELDEM1.CRE~  ~override~
-              ~HELDEM2.CRE~  ~override~
-              ~MARIL.CRE~    ~override~
- WRITE_LONG 0x28 0xE090   //IC_MERILITH      0xE090 MERILITH with EE
+	            ~CADDEM14.CRE~ ~override~
+	            ~CADDEM6.CRE~  ~override~
+	            ~GARMARI1.CRE~ ~override~
+	            ~GARMARI2.CRE~ ~override~
+	            ~GODMARI1.CRE~ ~override~
+	            ~HELDEM1.CRE~  ~override~
+	            ~HELDEM2.CRE~  ~override~
+	            ~MARIL.CRE~    ~override~
+	WRITE_LONG 0x28 0xE090   //IC_MERILITH      0xE090 MERILITH with EE
 BUT_ONLY_IF_IT_CHANGES
 
 
@@ -854,7 +909,7 @@ BUT_ONLY_IF_IT_CHANGES
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_IF (NOT FILE_EXISTS ~data/TS-RULE.BIF~) BEGIN
 		ACTION_FOR_EACH var IN 2da wav bam BEGIN
-			ACTION_BASH_FOR ~RoT/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
+			ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
 		END
@@ -867,7 +922,7 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
 			OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 				REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MUMB~ ~MBE1~
 			END
@@ -877,7 +932,7 @@ ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 		END
 	END
 	ACTION_FOR_EACH var IN wav ini BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Belhifet~ ~^.+\.%var%$~ BEGIN
 			ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
@@ -895,26 +950,26 @@ END
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_IF (NOT FILE_EXISTS ~data/SOS-RULE.BIF~) AND	(NOT FILE_EXISTS_IN_GAME ~sos.mrk~) AND	(NOT FILE_EXISTS_IN_GAME ~TT0025.ARE~) BEGIN
 		ACTION_FOR_EACH var IN 2da bam BEGIN
-			ACTION_BASH_FOR ~RoT/anim/Yeti~ ~^.+\.%var%$~ BEGIN
+			ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Yeti~ ~^.+\.%var%$~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Yeti~ ~^.+\.ogg$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Yeti~ ~^.+\.ogg$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_RES%.wav~ BEGIN
-			COPY ~%BASH_FOR_FILESPEC%~ ~RoT/ogg2~
+			COPY ~%BASH_FOR_FILESPEC%~ ~%workspace%/ogg2~
 		END
 	END
 	COPY_EXISTING ~YETI1.CRE~    ~override~
-              ~YETI2.CRE~    ~override~
-              ~YETI3.CRE~    ~override~
+	            ~YETI2.CRE~    ~override~
+	            ~YETI3.CRE~    ~override~
 		WRITE_LONG 0x28 0xE060   //IC_LICH
 	BUT_ONLY_IF_IT_CHANGES
 END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Yeti~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Yeti~ ~^.+\.%var%$~ BEGIN
 			OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 				REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MLIC~ ~MYET~
 			END
@@ -923,9 +978,9 @@ ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 			END
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Yeti~ ~^.+\.ogg$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Yeti~ ~^.+\.ogg$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_RES%.wav~ BEGIN
-			COPY ~%BASH_FOR_FILESPEC%~ ~RoT/ogg2~
+			COPY ~%BASH_FOR_FILESPEC%~ ~%workspace%/ogg2~
 		END
 	END
 	COPY_EXISTING ~YETI1.CRE~    ~override~
@@ -938,16 +993,16 @@ END
 //***********************************************************************************
 // FROST GIANT animation
 //***********************************************************************************
-ACTION_BASH_FOR ~RoT/anim/FrostG~ ~^.+\.ogg$~ BEGIN
+ACTION_BASH_FOR ~%MOD_FOLDER%/anim/FrostG~ ~^.+\.ogg$~ BEGIN
 	ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_RES%.wav~ BEGIN
-		COPY ~%BASH_FOR_FILESPEC%~ ~RoT/ogg2~
+		COPY ~%BASH_FOR_FILESPEC%~ ~%MOD_FOLDER%/ogg2~
 	END
 END
 
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_IF NOT FILE_EXISTS ~data/TDD-RULE.BIF~ AND NOT FILE_EXISTS_IN_GAME ~tdd.mrk~ BEGIN
 		ACTION_FOR_EACH var IN 2da bam BEGIN
-			ACTION_BASH_FOR ~RoT/anim/FrostG~ ~^.+\.%var%$~ BEGIN
+			ACTION_BASH_FOR ~%MOD_FOLDER%/anim/FrostG~ ~^.+\.%var%$~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
 		END
@@ -980,7 +1035,7 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/FrostG~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/FrostG~ ~^.+\.%var%$~ BEGIN
 			OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 				REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MNO2~ ~MGFR~
 			END
@@ -1014,13 +1069,13 @@ END
 // FIRE GIANT animation - use existing ToB animation
 //***********************************************************************************
 COPY_EXISTING ~CULTMO9.cre~     ~override~
-              ~GGIANTF1.cre~    ~override~
-              ~GGIANTF2.cre~    ~override~
-              ~GGIANTF3.cre~    ~override~
-              ~GGIANTFR.cre~    ~override~
-              ~GIANTF01.cre~    ~override~
-              ~GIANTFR.cre~     ~override~
- WRITE_LONG 0x28  0x7F3E   //FIRE_GIANT    0x7F3E GIANT_FIRE with EE
+	            ~GGIANTF1.cre~    ~override~
+	            ~GGIANTF2.cre~    ~override~
+	            ~GGIANTF3.cre~    ~override~
+	            ~GGIANTFR.cre~    ~override~
+	            ~GIANTF01.cre~    ~override~
+	            ~GIANTFR.cre~     ~override~
+	WRITE_LONG 0x28  0x7F3E   //FIRE_GIANT    0x7F3E GIANT_FIRE with EE
 BUT_ONLY_IF_IT_CHANGES
 
 
@@ -1031,7 +1086,7 @@ BUT_ONLY_IF_IT_CHANGES
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_IF (NOT FILE_EXISTS ~data/CtB-RULE.BIF~) AND (NOT FILE_EXISTS_IN_GAME ~ctb.mrk~)	BEGIN
 		ACTION_FOR_EACH var IN 2da bam wav BEGIN
-			ACTION_BASH_FOR ~RoT/anim/Virgin~ ~^.+\.%var%$~ BEGIN
+			ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Virgin~ ~^.+\.%var%$~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
 		END
@@ -1060,7 +1115,7 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Virgin~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Virgin~ ~^.+\.%var%$~ BEGIN
 			OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 				REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MTIC~ ~MDH2~
 			END
@@ -1069,9 +1124,9 @@ ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 			END
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Virgin/MHAR~ ~^.+\.wav$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Virgin/MHAR~ ~^.+\.wav$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
-			COPY ~%BASH_FOR_FILESPEC%~ ~override~
+			COPY ~%BASH_FOR_FILESPEC%~ ~%workspace%/ogg2~
 		END
 	END
 	
@@ -1100,7 +1155,7 @@ END
 //***********************************************************************************
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_FOR_EACH var IN 2da bam wav BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Samurai~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Samurai~ ~^.+\.%var%$~ BEGIN
 			ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
@@ -1124,13 +1179,13 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN wav ini BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Samurai/MISA~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Samurai/MISA~ ~^.+\.%var%$~ BEGIN
 			ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Samurai~ ~^.+\.bam$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Samurai~ ~^.+\.bam$~ BEGIN
 		OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 			REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MZO2~ ~MISA~
 		END
@@ -1159,7 +1214,7 @@ END
 //***********************************************************************************
 ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
 	ACTION_FOR_EACH var IN 2da bam wav BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Abishai~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Abishai~ ~^.+\.%var%$~ BEGIN
 			COPY ~%BASH_FOR_FILESPEC%~ ~override~
 		END
 	END
@@ -1186,7 +1241,7 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Abishai~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Abishai~ ~^.+\.%var%$~ BEGIN
 			OUTER_PATCH_SAVE newname ~%BASH_FOR_FILE%~ BEGIN
 				REPLACE_TEXTUALLY CASE_INSENSITIVE EXACT_MATCH ~MGO4~ ~MABW~
 			END
@@ -1195,7 +1250,7 @@ ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 			END
 		END
 	END
-	ACTION_BASH_FOR ~RoT/anim/Abishai~ ~^.+\.wav$~ BEGIN
+	ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Abishai~ ~^.+\.wav$~ BEGIN
 		ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 			COPY ~%BASH_FOR_FILESPEC%~ ~override~
 		END
@@ -1239,7 +1294,7 @@ END
 
 ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
 	ACTION_FOR_EACH var IN bam BEGIN
-		ACTION_BASH_FOR ~RoT/anim/Horror~ ~^.+\.%var%$~ BEGIN
+		ACTION_BASH_FOR ~%MOD_FOLDER%/anim/Horror~ ~^.+\.%var%$~ BEGIN
 			ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_FILE%~ BEGIN
 				COPY ~%BASH_FOR_FILESPEC%~ ~override~
 			END
@@ -1264,43 +1319,43 @@ END
 PRINT @1609
 
 ACTION_IF FILE_EXISTS ~Worldmap/map_mods_areas.tbl~ THEN BEGIN
-  COPY ~Worldmap/map_mods_areas.tbl~  ~Worldmap~
-   APPEND_FILE ~RoT/Worldmap/areas.tbl~
+	COPY ~Worldmap/map_mods_areas.tbl~  ~Worldmap~
+	 APPEND_FILE ~%MOD_FOLDER%/Worldmap/areas.tbl~
 
-  COPY ~Worldmap/map_mods_links.tbl~  ~Worldmap~
-   APPEND_FILE ~RoT/Worldmap/links.tbl~
-   PATCH_IF (FILE_EXISTS_IN_GAME ~sos.mrk~)  OR (FILE_EXISTS ~data/SOS-RULE.BIF~) BEGIN
-     APPEND_FILE ~RoT/Worldmap/sos_links.tbl~                        
-   END                                                                    
-   PATCH_IF (FILE_EXISTS_IN_GAME ~ctb.mrk~)  OR (FILE_EXISTS ~data/CTB-RULE.BIF~) BEGIN
-     APPEND_FILE ~RoT/Worldmap/ctb_links.tbl~                        
-   END                                                                    
-   PATCH_IF (FILE_EXISTS_IN_GAME ~tdd.mrk~)  OR (FILE_EXISTS ~data/TDD-RULE.BIF~) OR  (MOD_IS_INSTALLED "setup-TDDz.tp2" "0") BEGIN
-     APPEND_FILE ~RoT/Worldmap/tdd_links.tbl~
-   END
+	COPY ~Worldmap/map_mods_links.tbl~  ~Worldmap~
+	 APPEND_FILE ~%MOD_FOLDER%/Worldmap/links.tbl~
+	 PATCH_IF (FILE_EXISTS_IN_GAME ~sos.mrk~)  OR (FILE_EXISTS ~data/SOS-RULE.BIF~) BEGIN
+	   APPEND_FILE ~%MOD_FOLDER%/Worldmap/sos_links.tbl~                        
+	 END                                                                    
+	 PATCH_IF (FILE_EXISTS_IN_GAME ~ctb.mrk~)  OR (FILE_EXISTS ~data/CTB-RULE.BIF~) BEGIN
+	   APPEND_FILE ~%MOD_FOLDER%/Worldmap/ctb_links.tbl~                        
+	 END                                                                    
+	 PATCH_IF (FILE_EXISTS_IN_GAME ~tdd.mrk~)  OR (FILE_EXISTS ~data/TDD-RULE.BIF~) OR  (MOD_IS_INSTALLED "setup-TDDz.tp2" "0") BEGIN
+	   APPEND_FILE ~%MOD_FOLDER%/Worldmap/tdd_links.tbl~
+	 END
 
-  //preliminary step - making LANGUAGE temporary file until the new WeiDU
-  COPY - ~RoT/Worldmap/%LANGUAGE%/worldmap.tra~  ~tmp_worldmap.tra~
-  COPY ~Worldmap/map_mods_trans.tra~  ~Worldmap~
-   APPEND_FILE ~tmp_worldmap.tra~
+	//preliminary step - making LANGUAGE temporary file until the new WeiDU
+	COPY - ~%TRA_LOCATION%/%LANGUAGE%/Worldmap.tra~  ~tmp_worldmap.tra~
+	COPY ~Worldmap/map_mods_trans.tra~  ~Worldmap~
+	 APPEND_FILE ~tmp_worldmap.tra~
 END
 ELSE BEGIN
-  MKDIR ~Worldmap~
-  COPY ~RoT/Worldmap/areas.tbl~ ~Worldmap/map_mods_areas.tbl~
-  COPY ~RoT/Worldmap/links.tbl~ ~Worldmap/map_mods_links.tbl~
-  COPY ~RoT/Worldmap/%LANGUAGE%/worldmap.tra~ ~Worldmap/map_mods_trans.tra~
+	MKDIR ~Worldmap~
+	COPY ~%MOD_FOLDER%/Worldmap/areas.tbl~ ~Worldmap/map_mods_areas.tbl~
+	COPY ~%MOD_FOLDER%/Worldmap/links.tbl~ ~Worldmap/map_mods_links.tbl~
+	COPY ~%TRA_LOCATION%/%LANGUAGE%/Worldmap.tra~ ~Worldmap/map_mods_trans.tra~
 END
 
 ACTION_IF GAME_IS ~eet~ BEGIN
 	COPY ~%MOD_FOLDER%/Worldmap/eet/eet-links.tbl~  ~%MOD_FOLDER%/Worldmap/eet~
 		PATCH_IF (FILE_EXISTS_IN_GAME ~sos.mrk~)  OR (FILE_EXISTS ~data/SOS-RULE.BIF~) BEGIN
-			APPEND_FILE ~RoT/Worldmap/eet/sos_links.tbl~                        
+			APPEND_FILE ~%MOD_FOLDER%/Worldmap/eet/sos_links.tbl~                        
 		END                                                                    
 		PATCH_IF (FILE_EXISTS_IN_GAME ~ctb.mrk~)  OR (FILE_EXISTS ~data/CTB-RULE.BIF~) BEGIN
-			APPEND_FILE ~RoT/Worldmap/eet/ctb_links.tbl~                        
+			APPEND_FILE ~%MOD_FOLDER%/Worldmap/eet/ctb_links.tbl~                        
 		END                                                                    
 		PATCH_IF (FILE_EXISTS_IN_GAME ~tdd.mrk~)  OR (FILE_EXISTS ~data/TDD-RULE.BIF~) OR  (MOD_IS_INSTALLED "setup-TDDz.tp2" "0") BEGIN
-			APPEND_FILE ~RoT/Worldmap/eet/tdd_links.tbl~
+			APPEND_FILE ~%MOD_FOLDER%/Worldmap/eet/tdd_links.tbl~
 		END
 
 	INCLUDE ~%MOD_FOLDER%/lib/add_worldmap_tbl.tpa~
@@ -1312,7 +1367,7 @@ ACTION_IF GAME_IS ~eet~ BEGIN
 		path_to_areas = EVAL ~%MOD_FOLDER%/Worldmap/eet/eet-areas.tbl~
 //		path_to_areas_bp = EVAL ~%MOD_FOLDER%/Worldmap/areas.tbl~
 		path_to_links = EVAL ~%MOD_FOLDER%/Worldmap/eet/eet-links.tbl~
-		path_to_trans = EVAL ~%MOD_FOLDER%/Worldmap/%LANGUAGE%/worldmap.tra~
+		path_to_trans = EVAL ~%TRA_LOCATION%/%LANGUAGE%/Worldmap.tra~
 	END
 	//INCLUDE ~%MOD_FOLDER%/worldmap/eet/PatchingAreas.tpa~
 END
@@ -1322,7 +1377,7 @@ END
 //////////////////////////////
 PRINT @1625
 
-COPY ~RoT/music~   ~music~
+COPY ~%MOD_FOLDER%/music~   ~music~
 MKDIR ~music/CDay1~
 MKDIR ~music/CNite~
 MKDIR ~music/Harp_v4~
@@ -1330,13 +1385,13 @@ MKDIR ~music/Mx2102~
 MKDIR ~music/mx5411~
 MKDIR ~music/MxFff6~
 MKDIR ~music/MxIwd2~
-COPY ~RoT/music/CDay1~    ~music/CDay1~
-COPY ~RoT/music/CNite~    ~music/CNite~
-COPY ~RoT/music/Harp_v4~  ~music/Harp_v4~
-COPY ~RoT/music/Mx2102~   ~music/Mx2102~
-COPY ~RoT/music/mx5411~   ~music/mx5411~
-COPY ~RoT/music/MxFff6~   ~music/MxFff6~
-COPY ~RoT/music/MxIwd2~   ~music/MxIwd2~ 
+COPY ~%MOD_FOLDER%/music/CDay1~    ~music/CDay1~
+COPY ~%MOD_FOLDER%/music/CNite~    ~music/CNite~
+COPY ~%MOD_FOLDER%/music/Harp_v4~  ~music/Harp_v4~
+COPY ~%MOD_FOLDER%/music/Mx2102~   ~music/Mx2102~
+COPY ~%MOD_FOLDER%/music/mx5411~   ~music/mx5411~
+COPY ~%MOD_FOLDER%/music/MxFff6~   ~music/MxFff6~
+COPY ~%MOD_FOLDER%/music/MxIwd2~   ~music/MxIwd2~ 
 
 OUTER_SET rows_cnt=0
 OUTER_SET area1602=0
@@ -1346,166 +1401,166 @@ OUTER_SET tav6=0
 OUTER_SET extra=0
 
 COPY_EXISTING - ~SONGLIST.2da~ ~override~
- COUNT_2DA_ROWS 3 "rows_cnt"
- FOR(cnt=0; cnt<"%rows_cnt%"; cnt+=1) BEGIN    //following entries don't exist and we can use them
-    READ_2DA_ENTRY cnt 1 3 "song_name"
-    PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Area1602")=0 ) BEGIN
-      SET area1602 = cnt
-      SET extra += 1
-      INNER_ACTION BEGIN
-        COPY_EXISTING ~AR1602.ARE~ ~override~
-                      ~AR2010.ARE~ ~override~
-                      ~AR5501.ARE~ ~override~
-         READ_LONG  0xbc "song_offset"
-         WRITE_LONG ("%song_offset%")   0
-         WRITE_LONG ("%song_offset%"+4) 0
-        BUT_ONLY_IF_IT_CHANGES
-      END
-    END
-    PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Area2202")=0 ) BEGIN
-      SET area2202 = cnt
-      SET extra += 1
-      INNER_ACTION BEGIN
-        COPY_EXISTING ~AR2202.ARE~ ~override~
-                      ~AR2203.ARE~ ~override~
-                      ~AR5003.ARE~ ~override~
-         READ_LONG  0xbc "song_offset"
-         WRITE_LONG ("%song_offset%")   0
-         WRITE_LONG ("%song_offset%"+4) 0
-        BUT_ONLY_IF_IT_CHANGES
-      END
-    END
-    PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Tavern5")=0 ) BEGIN
-      SET tav5 = cnt
-      SET extra += 1
-      INNER_ACTION BEGIN
-        COPY_EXISTING ~AR0509.ARE~ ~override~
-         READ_LONG  0xbc "song_offset"
-         WRITE_LONG ("%song_offset%")   0
-         WRITE_LONG ("%song_offset%"+4) 0
-        BUT_ONLY_IF_IT_CHANGES
-      END
-    END
-    PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Tavern6")=0 ) BEGIN
-      SET tav6 = cnt
-      SET extra += 1
-      INNER_ACTION BEGIN
-        COPY_EXISTING ~AR0513.ARE~ ~override~
-         READ_LONG  0xbc "song_offset"
-         WRITE_LONG ("%song_offset%")   0
-         WRITE_LONG ("%song_offset%"+4) 0
-        BUT_ONLY_IF_IT_CHANGES
-      END
-    END
- END
+	COUNT_2DA_ROWS 3 "rows_cnt"
+	FOR(cnt=0; cnt<"%rows_cnt%"; cnt+=1) BEGIN    //following entries don't exist and we can use them
+	  READ_2DA_ENTRY cnt 1 3 "song_name"
+	  PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Area1602")=0 ) BEGIN
+	    SET area1602 = cnt
+	    SET extra += 1
+	    INNER_ACTION BEGIN
+	      COPY_EXISTING ~AR1602.ARE~ ~override~
+	                    ~AR2010.ARE~ ~override~
+	                    ~AR5501.ARE~ ~override~
+	       READ_LONG  0xbc "song_offset"
+	       WRITE_LONG ("%song_offset%")   0
+	       WRITE_LONG ("%song_offset%"+4) 0
+	      BUT_ONLY_IF_IT_CHANGES
+	    END
+	  END
+	  PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Area2202")=0 ) BEGIN
+	    SET area2202 = cnt
+	    SET extra += 1
+	    INNER_ACTION BEGIN
+	      COPY_EXISTING ~AR2202.ARE~ ~override~
+	                    ~AR2203.ARE~ ~override~
+	                    ~AR5003.ARE~ ~override~
+	       READ_LONG  0xbc "song_offset"
+	       WRITE_LONG ("%song_offset%")   0
+	       WRITE_LONG ("%song_offset%"+4) 0
+	      BUT_ONLY_IF_IT_CHANGES
+	    END
+	  END
+	  PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Tavern5")=0 ) BEGIN
+	    SET tav5 = cnt
+	    SET extra += 1
+	    INNER_ACTION BEGIN
+	      COPY_EXISTING ~AR0509.ARE~ ~override~
+	       READ_LONG  0xbc "song_offset"
+	       WRITE_LONG ("%song_offset%")   0
+	       WRITE_LONG ("%song_offset%"+4) 0
+	      BUT_ONLY_IF_IT_CHANGES
+	    END
+	  END
+	  PATCH_IF( ("%song_name%" STRING_COMPARE_CASE "Tavern6")=0 ) BEGIN
+	    SET tav6 = cnt
+	    SET extra += 1
+	    INNER_ACTION BEGIN
+	      COPY_EXISTING ~AR0513.ARE~ ~override~
+	       READ_LONG  0xbc "song_offset"
+	       WRITE_LONG ("%song_offset%")   0
+	       WRITE_LONG ("%song_offset%"+4) 0
+	      BUT_ONLY_IF_IT_CHANGES
+	    END
+	  END
+	END
 
 ACTION_IF ("%rows_cnt%"<=(93 + extra)) THEN BEGIN
-  OUTER_SET extra=0
-  ACTION_IF( area1602=0 ) THEN BEGIN
-    APPEND ~SONGLIST.2DA~ ~9999_68      IWD2Area        MXIWD2.MUS~
-    OUTER_SET song_68 = "%rows_cnt%"
-    OUTER_SET extra = extra + 1
-  END
-  ACTION_IF( area2202=0 ) THEN BEGIN
-    APPEND ~SONGLIST.2DA~ ~9999_69      FF6Music        MXFFF6.MUS~
-    OUTER_SET song_69 = "%rows_cnt%"+extra
-    OUTER_SET extra = extra + 1
-  END
-  ACTION_IF( tav5=0 ) THEN BEGIN
-    APPEND ~SONGLIST.2DA~ ~9999_71      CDAY1           CDAY1.MUS~
-    OUTER_SET song_71 = "%rows_cnt%"+extra
-    OUTER_SET extra = extra + 1
-  END
-  ACTION_IF( tav6=0 ) THEN BEGIN
-    APPEND ~SONGLIST.2DA~ ~9999_72      CNITE           CNITE.MUS~
-    OUTER_SET song_72 = "%rows_cnt%"+extra
-    OUTER_SET extra = extra + 1
-  END
+	OUTER_SET extra=0
+	ACTION_IF( area1602=0 ) THEN BEGIN
+	  APPEND ~SONGLIST.2DA~ ~9999_68      IWD2Area        MXIWD2.MUS~
+	  OUTER_SET song_68 = "%rows_cnt%"
+	  OUTER_SET extra = extra + 1
+	END
+	ACTION_IF( area2202=0 ) THEN BEGIN
+	  APPEND ~SONGLIST.2DA~ ~9999_69      FF6Music        MXFFF6.MUS~
+	  OUTER_SET song_69 = "%rows_cnt%"+extra
+	  OUTER_SET extra = extra + 1
+	END
+	ACTION_IF( tav5=0 ) THEN BEGIN
+	  APPEND ~SONGLIST.2DA~ ~9999_71      CDAY1           CDAY1.MUS~
+	  OUTER_SET song_71 = "%rows_cnt%"+extra
+	  OUTER_SET extra = extra + 1
+	END
+	ACTION_IF( tav6=0 ) THEN BEGIN
+	  APPEND ~SONGLIST.2DA~ ~9999_72      CNITE           CNITE.MUS~
+	  OUTER_SET song_72 = "%rows_cnt%"+extra
+	  OUTER_SET extra = extra + 1
+	END
 
-  APPEND ~SONGLIST.2DA~ ~9999_73      Harp_V4         HARP_V4.MUS~
-  APPEND ~SONGLIST.2DA~ ~9999_74      MX2102          MX2102.MUS~
-  APPEND ~SONGLIST.2DA~ ~9999_75      MX5411          MX5411.MUS~
-  OUTER_SET song_73 = "%rows_cnt%" + extra
-  OUTER_SET song_74 = "%rows_cnt%" + extra + 1
-  OUTER_SET song_75 = "%rows_cnt%" + extra + 2
-
-
-  COPY_EXISTING ~SONGLIST.2da~  ~override~
-   PATCH_IF( area1602!=0 ) BEGIN
-     SET_2DA_ENTRY area1602 1 3 "IWD2Area"
-     SET_2DA_ENTRY area1602 2 3 "MXIWD2.MUS"
-     SET song_68 = area1602
-   END ELSE BEGIN
-     REPLACE_TEXTUALLY ~9999_68~    "%song_68%"
-   END
-   PATCH_IF( area2202!=0 ) BEGIN
-     SET_2DA_ENTRY area2202 1 3 "FF6Music"
-     SET_2DA_ENTRY area2202 2 3 "MXFFF6.MUS"
-     SET song_69 = area2202
-   END ELSE BEGIN
-     REPLACE_TEXTUALLY ~9999_69~    "%song_69%"
-   END
-   PATCH_IF( tav5!=0 ) BEGIN
-     SET_2DA_ENTRY tav5 1 3 "CDAY1"
-     SET_2DA_ENTRY tav5 2 3 "CDAY1.MUS"
-     SET song_71 = tav5
-   END ELSE BEGIN
-     REPLACE_TEXTUALLY ~9999_71~    "%song_71%"
-   END
-   PATCH_IF( tav6!=0 ) BEGIN
-     SET_2DA_ENTRY tav6 1 3 "CNITE"
-     SET_2DA_ENTRY tav6 2 3 "CNITE.MUS"
-     SET song_72 = tav6
-   END ELSE BEGIN
-     REPLACE_TEXTUALLY ~9999_72~    "%song_72%"
-   END
-   REPLACE_TEXTUALLY ~9999_73~    "%song_73%"
-   REPLACE_TEXTUALLY ~9999_74~    "%song_74%"
-   REPLACE_TEXTUALLY ~9999_75~    "%song_75%"
-  BUT_ONLY_IF_IT_CHANGES
+	APPEND ~SONGLIST.2DA~ ~9999_73      Harp_V4         HARP_V4.MUS~
+	APPEND ~SONGLIST.2DA~ ~9999_74      MX2102          MX2102.MUS~
+	APPEND ~SONGLIST.2DA~ ~9999_75      MX5411          MX5411.MUS~
+	OUTER_SET song_73 = "%rows_cnt%" + extra
+	OUTER_SET song_74 = "%rows_cnt%" + extra + 1
+	OUTER_SET song_75 = "%rows_cnt%" + extra + 2
 
 
-  COPY_EXISTING ~override/RA5100.are~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_68%"    //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_68%"    //night song
-   BUT_ONLY_IF_IT_CHANGES
+	COPY_EXISTING ~SONGLIST.2da~  ~override~
+	 PATCH_IF( area1602!=0 ) BEGIN
+	   SET_2DA_ENTRY area1602 1 3 "IWD2Area"
+	   SET_2DA_ENTRY area1602 2 3 "MXIWD2.MUS"
+	   SET song_68 = area1602
+	 END ELSE BEGIN
+	   REPLACE_TEXTUALLY ~9999_68~    "%song_68%"
+	 END
+	 PATCH_IF( area2202!=0 ) BEGIN
+	   SET_2DA_ENTRY area2202 1 3 "FF6Music"
+	   SET_2DA_ENTRY area2202 2 3 "MXFFF6.MUS"
+	   SET song_69 = area2202
+	 END ELSE BEGIN
+	   REPLACE_TEXTUALLY ~9999_69~    "%song_69%"
+	 END
+	 PATCH_IF( tav5!=0 ) BEGIN
+	   SET_2DA_ENTRY tav5 1 3 "CDAY1"
+	   SET_2DA_ENTRY tav5 2 3 "CDAY1.MUS"
+	   SET song_71 = tav5
+	 END ELSE BEGIN
+	   REPLACE_TEXTUALLY ~9999_71~    "%song_71%"
+	 END
+	 PATCH_IF( tav6!=0 ) BEGIN
+	   SET_2DA_ENTRY tav6 1 3 "CNITE"
+	   SET_2DA_ENTRY tav6 2 3 "CNITE.MUS"
+	   SET song_72 = tav6
+	 END ELSE BEGIN
+	   REPLACE_TEXTUALLY ~9999_72~    "%song_72%"
+	 END
+	 REPLACE_TEXTUALLY ~9999_73~    "%song_73%"
+	 REPLACE_TEXTUALLY ~9999_74~    "%song_74%"
+	 REPLACE_TEXTUALLY ~9999_75~    "%song_75%"
+	BUT_ONLY_IF_IT_CHANGES
 
-  COPY_EXISTING ~override/RA3704.ARE~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_69%"     //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_69%"     //night song
-    WRITE_LONG ("%song_offset%"+0x0c) "%song_69%"  //battle song
-   BUT_ONLY_IF_IT_CHANGES
 
-  COPY_EXISTING ~override/RR3100.ARE~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_71%"    //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_72%"    //night song
-   BUT_ONLY_IF_IT_CHANGES
+	COPY_EXISTING ~RA5100.are~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_68%"    //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_68%"    //night song
+	 BUT_ONLY_IF_IT_CHANGES
 
-  COPY_EXISTING ~override/RA5104.ARE~  ~override~
-                ~override/RR3409.ARE~  ~override~
-                ~override/RR3410.ARE~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_73%"     //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_73%"     //night song
-   BUT_ONLY_IF_IT_CHANGES
+	COPY_EXISTING ~RA3704.ARE~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_69%"     //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_69%"     //night song
+	  WRITE_LONG ("%song_offset%"+0x0c) "%song_69%"  //battle song
+	 BUT_ONLY_IF_IT_CHANGES
 
-  COPY_EXISTING ~override/RA5400.ARE~  ~override~
-                ~override/RA5412.ARE~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_74%"     //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_74%"     //night song
-   BUT_ONLY_IF_IT_CHANGES
+	COPY_EXISTING ~RR3100.ARE~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_71%"    //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_72%"    //night song
+	 BUT_ONLY_IF_IT_CHANGES
 
-  COPY_EXISTING ~override/RA5411.ARE~  ~override~
-                ~override/RA5416.ARE~  ~override~
-                ~override/RA5600.ARE~  ~override~
-    READ_LONG  0xbc "song_offset"
-    WRITE_LONG ("%song_offset%")   "%song_75%"     //day song
-    WRITE_LONG ("%song_offset%"+4) "%song_75%"     //night song
-   BUT_ONLY_IF_IT_CHANGES
+	COPY_EXISTING ~RA5104.ARE~  ~override~
+	              ~RR3409.ARE~  ~override~
+	              ~RR3410.ARE~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_73%"     //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_73%"     //night song
+	 BUT_ONLY_IF_IT_CHANGES
+
+	COPY_EXISTING ~RA5400.ARE~  ~override~
+	              ~RA5412.ARE~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_74%"     //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_74%"     //night song
+	 BUT_ONLY_IF_IT_CHANGES
+
+	COPY_EXISTING ~RA5411.ARE~  ~override~
+	              ~RA5416.ARE~  ~override~
+	              ~RA5600.ARE~  ~override~
+	  READ_LONG  0xbc "song_offset"
+	  WRITE_LONG ("%song_offset%")   "%song_75%"     //day song
+	  WRITE_LONG ("%song_offset%"+4) "%song_75%"     //night song
+	 BUT_ONLY_IF_IT_CHANGES
 END
 ELSE BEGIN
 	INCLUDE ~%MOD_FOLDER%/lib/install-songlist.tpa~
@@ -1515,40 +1570,47 @@ END
 // uncompressing audio
 //////////////////////////////
 
-MKDIR ~RoT/language/%LANGUAGE%/ogg1~
+MKDIR ~%workspace%/Language/%LANGUAGE%/Ogg1~
 
 
-ACTION_BASH_FOR ~RoT/language/english/ogg1~ ~^.+\.ogg$~ BEGIN
-	ACTION_IF NOT FILE_EXISTS ~RoT/language/%LANGUAGE%/ogg1/%BASH_FOR_FILE%~ BEGIN
-		COPY ~%BASH_FOR_FILESPEC%~ ~RoT/language/%LANGUAGE%/ogg1~
-	END
+ACTION_BASH_FOR ~%MOD_FOLDER%/Language/English/Ogg1~ ~^.+\.ogg$~ BEGIN
+	  ACTION_IF NOT FILE_EXISTS ~%workspace%/Language/%LANGUAGE%/Ogg1/%BASH_FOR_FILE%~ BEGIN
+	      COPY ~%BASH_FOR_FILESPEC%~ ~%workspace%/Language/%LANGUAGE%/Ogg1~
+	  END
 END
 
-LAF HANDLE_AUDIO  // With no configuration, HANDLE_AUDIO expects your audio, oggdec.exe and SoX to be located in mymod/audio
-  STR_VAR
-    audio_path = EVAL ~RoT/language/%LANGUAGE%/ogg1~
-    oggdec_path = ~RoT/bin/win32~
-	sox_path = ~RoT/bin/osx~
-	output_path = ~override~
+ACTION_BASH_FOR ~%MOD_FOLDER%/Ogg2~ ~^.+\.ogg$~ BEGIN
+	  ACTION_IF NOT FILE_EXISTS_IN_GAME ~%BASH_FOR_RES%.wav~ BEGIN
+	      COPY ~%BASH_FOR_FILESPEC%~ ~%workspace%/Ogg2~
+	  END
 END
 
-LAF HANDLE_AUDIO
-  STR_VAR
-    audio_path = ~RoT/ogg2~
-    oggdec_path = ~RoT/bin/win32~
-	sox_path = ~RoT/bin/osx~
-	output_path = ~override~
+LAF HANDLE_AUDIO // With no configuration, HANDLE_AUDIO expects your audio, oggdec.exe and SoX to be located in mymod/audio
+	  STR_VAR
+	      audio_path = EVAL ~%workspace%/Language/%LANGUAGE%/Ogg1~
+	      oggdec_path = EVAL ~%MOD_FOLDER%/Tools/oggdec~
+	      sox_path = EVAL ~%MOD_FOLDER%/Tools/sox/~
+	      output_path = ~override~
+END
+
+LAF HANDLE_AUDIO 
+	  STR_VAR
+	      audio_path = EVAL ~%workspace%/Ogg2~
+	      oggdec_path = EVAL ~%MOD_FOLDER%/Tools/oggdec~
+	      sox_path = EVAL ~%MOD_FOLDER%/Tools/sox/~
+	      output_path = ~override~
 END
 
 ACTION_IF (GAME_IS ~bg2 tob bgt~) BEGIN
 	LAF HANDLE_TILESETS
 		STR_VAR
-		tiz_path = ~RoT/Tiz~
-		tisunpack_path = ~RoT/bin~
+		tiz_path = EVAL ~%MOD_FOLDER%/Tiz~
+		tisunpack_path = EVAL ~%MOD_FOLDER%/bin~
 	END	 
 END
+
 ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
-   COPY ~RoT\PVRZ~ ~override~
+	 COPY ~%MOD_FOLDER%\PVRZ~ ~override~
 
 END
 
@@ -1613,7 +1675,7 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 	~Dark_Paladin            15      0       0       0       0       15~
 	~Dark_Paladin            0       0       1       0       0       1       0       0       1~
 	~Dark_Paladin            0       0       0       0       0       0~
-	~RoT/kits/CLABPADa.2DA~
+	~%MOD_FOLDER%/kits/CLABPADa.2DA~
 	//~ K_P_HO  K_P_HL  K_P_HE  K_P_E  K_P_G  K_P_D  K_P_H ~
 	~~
 	~0x00500000 6~
@@ -1624,7 +1686,7 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 	SAY @1714
 	SAY @1715
 	
-	INCLUDE ~RoT/lib/fl#add_kit_ee.tpa~
+	INCLUDE ~%MOD_FOLDER%/lib/fl#add_kit_ee.tpa~
 	LAF fl#add_kit_ee
 	INT_VAR
 		briefdesc = RESOLVE_STR_REF (@1715)
@@ -1639,17 +1701,17 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 		clsrcreq = ~1 0 0 0 0 0 0~
 	END
 	
-	COPY ~RoT/kits/SPCL377.SPL~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL377.SPL~         ~override~
 	
-	COPY ~RoT/kits/SPCL378.SPL~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL378.SPL~         ~override~
 	SAY NAME1 @1716
 	
-	COPY ~RoT/kits/SPCL378.EFF~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL378.EFF~         ~override~
 	
-	COPY ~RoT/kits/MORDRG1.cre~   ~override~     //with extra kit spells
-		~RoT/kits/MORDRG2.cre~   ~override~
-		~RoT/kits/MORDRG3.cre~   ~override~
-		~RoT/kits/MORDRG4.cre~   ~override~
+	COPY ~%MOD_FOLDER%/kits/MORDRG1.cre~   ~override~     //with extra kit spells
+		~%MOD_FOLDER%/kits/MORDRG2.cre~   ~override~
+		~%MOD_FOLDER%/kits/MORDRG3.cre~   ~override~
+		~%MOD_FOLDER%/kits/MORDRG4.cre~   ~override~
 	SET bm_idx=0xffffffff
 	INNER_ACTION BEGIN
 		COPY_EXISTING + ~KITLIST.2DA~  ~override~
@@ -1711,7 +1773,7 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 	~Deneir                  0       0       0       13      13      0~
 	~Deneir                  0       1       0       0       1       0       0       1       0~
 	~Deneir                  1       0       1       1       0       1~
-	~RoT/kits/CLABCLDe.2DA~
+	~%MOD_FOLDER%/kits/CLABCLDe.2DA~
 	//~ K_C_HO  K_C_HL  K_C_HE  K_C_E  K_C_G  K_C_D  K_C_H ~
 	~~
 	~0x00000060 3~
@@ -1736,22 +1798,22 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 		clsrcreq = ~1 1 1 1 1 1 1~
 	END
 	
-	COPY ~RoT/kits/SPCL335.SPL~         ~override~     //bonuses
+	COPY ~%MOD_FOLDER%/kits/SPCL335.SPL~         ~override~     //bonuses
 	
-	COPY ~RoT/kits/SPCL336.SPL~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL336.SPL~         ~override~
 	SAY NAME1 @1667 
 	
-	COPY ~RoT/kits/SPCL337.SPL~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL337.SPL~         ~override~
 	SAY NAME1 @1668 
 	
-	COPY ~RoT/kits/SPCL338.SPL~         ~override~
+	COPY ~%MOD_FOLDER%/kits/SPCL338.SPL~         ~override~
 	SAY NAME1 @1669 
 	
-	COPY ~RoT/kits/ALISEXT.cre~   ~override~     //with extra kit spells
-		~RoT/kits/ALISSA8.cre~   ~override~
-		~RoT/kits/ALISSA10.cre~  ~override~
-		~RoT/kits/ALISSA12.cre~  ~override~
-		~RoT/kits/ALISSA14.cre~  ~override~
+	COPY ~%MOD_FOLDER%/kits/ALISEXT.cre~   ~override~     //with extra kit spells
+		~%MOD_FOLDER%/kits/ALISSA8.cre~   ~override~
+		~%MOD_FOLDER%/kits/ALISSA10.cre~  ~override~
+		~%MOD_FOLDER%/kits/ALISSA12.cre~  ~override~
+		~%MOD_FOLDER%/kits/ALISSA14.cre~  ~override~
 	SET bm_idx=0xffffffff
 	INNER_ACTION BEGIN
 		COPY_EXISTING + ~KITLIST.2DA~  ~override~
@@ -1810,9 +1872,17 @@ ACTION_IF (GAME_IS ~bg2ee eet~) BEGIN
 	BUT_ONLY_IF_IT_CHANGES
 END
 
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Region Of Terror Alternative Maribur Map         \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
 BEGIN @1805
 	DESIGNATED 3 LABEL ~rot-alternative-maribur~
-	REQUIRE_COMPONENT ~RoT/setup-RoT.tp2~ "0" @1803
+	REQUIRE_PREDICATE MOD_IS_INSTALLED "setup-RoT.tp2" (ID_OF_LABEL "setup-RoT.tp2" "region_of_terror" ) @1803
 
 	ACTION_IF GAME_IS ~bg2ee eet~ THEN BEGIN
 		COPY ~%MOD_FOLDER%/PVRZ/ALT/RR3900.TIS~ ~override~
@@ -1883,13 +1953,18 @@ BEGIN @1805
 			REPLACE_TEXTUALLY EXACT_MATCH ~[3360.2000]~ ~[1580.1500]~ // Jolnar
 		END
 
-/* =========================== *
- *  Region Of Terror Biffing   *
- * =========================== */
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Region Of Terror Biffing                         \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
 BEGIN @1801
 	DESIGNATED 2 LABEL ~rot_biffing~
 	REQUIRE_PREDICATE (GAME_IS ~bg2 tob bgt~) @1802
-	REQUIRE_COMPONENT ~RoT/setup-RoT.tp2~ "0" @1803
+	REQUIRE_PREDICATE MOD_IS_INSTALLED "setup-RoT.tp2" (ID_OF_LABEL "setup-RoT.tp2" "region_of_terror" ) @1803
 
 	ACTION_IF ~%WEIDU_OS%~ STR_EQ ~win32~ BEGIN
 		AT_UNINSTALL ~rmdir /s /q %MOD_FOLDER%\temp~ EXACT
@@ -1906,29 +1981,155 @@ BEGIN @1801
 	ACTION_PHP_EACH table_RoT_biff AS biff => size BEGIN
 		OUTER_SET totalSize = 0
 		OUTER_SET index = 0
-		MKDIR ~%MOD_FOLDER%/temp/%biff%%index%~
+		MKDIR ~%workspace%/%biff%%index%~
 		ACTION_BASH_FOR ~%biff_1%~ ~%biff_2%~ BEGIN
 			ACTION_IF ( BASH_FOR_SIZE + totalSize > size ) AND ( totalSize > 0 ) BEGIN
-				MAKE_BIFF ~%biff%%index%~ BEGIN ~%MOD_FOLDER%/temp/%biff%%index%~ ~^.*$~ END
+				MAKE_BIFF ~%biff%%index%~ BEGIN ~%workspace%/%biff%%index%~ ~^.*$~ END
 				OUTER_SET index = index + 1
 				OUTER_SET totalSize = 0
-				MKDIR ~%MOD_FOLDER%/temp/%biff%%index%~
+				MKDIR ~%workspace%/%biff%%index%~
 			END
-			MOVE ~%BASH_FOR_FILESPEC%~ ~%MOD_FOLDER%/temp/%biff%%index%~
+			MOVE ~%BASH_FOR_FILESPEC%~ ~%workspace%/%biff%%index%~
 			OUTER_SET totalSize = totalSize + BASH_FOR_SIZE
 		END
 		ACTION_IF ( totalSize > 0 ) BEGIN
-			MAKE_BIFF ~%biff%%index%~ BEGIN ~%MOD_FOLDER%/temp/%biff%%index%~ ~^.*$~ END
+			MAKE_BIFF ~%biff%%index%~ BEGIN ~%workspace%/%biff%%index%~ ~^.*$~ END
 		END
 	END
 
-/* =========================== *
- *  Region Of Terror Kit Pack  *
- * =========================== */
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Region Of Terror Kit Pack                        \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
 BEGIN @1626
 DESIGNATED 1 LABEL ~rot_kits~
 REQUIRE_PREDICATE (!GAME_IS ~bg2ee eet~) @1802
-REQUIRE_COMPONENT ~RoT/setup-RoT.tp2~ "0" @1803
+REQUIRE_PREDICATE MOD_IS_INSTALLED "setup-RoT.tp2" (ID_OF_LABEL "setup-RoT.tp2" "region_of_terror" ) @1803
 REQUIRE_PREDICATE ((MOD_IS_INSTALLED ~Setup-TDD.tp2~ ~1~) && (MOD_IS_INSTALLED ~TOBEX/TOBEX.TP2~ ~100~) || !(MOD_IS_INSTALLED ~Setup-TDD.tp2~ ~1~)) @1804 
 
 INCLUDE ~%MOD_FOLDER%/lib/install-kits.tpa~
+
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Region Of Terror Wizard Spell                    \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
+BEGIN ~RoT Wizard Spell~
+DESIGNATED 4 LABEL ~rot_wizard_spell~
+REQUIRE_PREDICATE MOD_IS_INSTALLED "setup-RoT.tp2" (ID_OF_LABEL "setup-RoT.tp2" "region_of_terror" ) @1803
+
+OUTER_SET spell_num = IDS_OF_SYMBOL(~spell~ ~WIZARD_EAGLES_SPLENDOR~)
+ACTION_IF (spell_num > 0) BEGIN
+	LAF RES_NUM_OF_SPELL_NAME
+		STR_VAR spell_name = ~WIZARD_EAGLES_SPLENDOR~
+		RET spell_num = spell_num spell = spell_res
+	END
+END ELSE BEGIN
+	ADD_SPELL ~%MOD_FOLDER%/Compat/CtB/CBWI140.SPL~ 2 1 ~WIZARD_EAGLES_SPLENDOR~
+		SAY NAME1  @926
+		SAY UNIDENTIFIED_DESC @927
+		SPRINT spell ~%DEST_RES%~
+		WRITE_ASCIIE 0x22e ~%DEST_RES%~ #8		
+END
+COPY ~%MOD_FOLDER%/itm/EAGLES.itm~    ~override~
+	SAY NAME2 @926
+	SAY DESC @927
+	WRITE_ASCIIE 0xf6 ~%spell%~ #8
+	WRITE_ASCIIE 0x126 ~%spell%~ #8
+COPY ~%MOD_FOLDER%/Compat/CtB/BAM~ ~override~
+
+///////////////////////////////////////////////////////////////////////////////////////////
+	
+OUTER_SET spell_num = IDS_OF_SYMBOL(~spell~ ~WIZARD_MONSTER_SUMMONING_IV~)
+ACTION_IF (spell_num > 0) BEGIN
+	LAF RES_NUM_OF_SPELL_NAME
+		STR_VAR spell_name = ~WIZARD_MONSTER_SUMMONING_IV~
+		RET spell_num = spell_num spell = spell_res
+	END
+END ELSE BEGIN
+	ADD_SPELL ~%MOD_FOLDER%/Compat/TDD/RTWI733.SPL~ 2 7 ~WIZARD_MONSTER_SUMMONING_IV~
+		SAY NAME1 @928
+		SAY UNIDENTIFIED_DESC @929
+		SPRINT spell ~%DEST_RES%~
+END
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX17.itm~    ~override~
+	SAY NAME2 @928
+	SAY DESC @929
+	WRITE_ASCIIE 0xf6 ~%spell%~ #8
+	WRITE_ASCIIE 0x126 ~%spell%~ #8
+
+///////////////////////////////////////////////////////////////////////////////////////////
+		
+OUTER_SET spell_num = IDS_OF_SYMBOL(~spell~ ~WIZARD_MONSTER_SUMMONING_V~)
+ACTION_IF (spell_num > 0) BEGIN
+	LAF RES_NUM_OF_SPELL_NAME
+		STR_VAR spell_name = ~WIZARD_MONSTER_SUMMONING_V~
+		RET spell_num = spell_num spell = spell_res
+	END
+END ELSE BEGIN
+	ADD_SPELL ~%MOD_FOLDER%/Compat/TDD/RTWI828.SPL~ 2 8 ~WIZARD_MONSTER_SUMMONING_V~
+		SAY NAME1 @930
+		SAY UNIDENTIFIED_DESC @931
+		SPRINT spell ~%DEST_RES%~
+END
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX24.itm~    ~override~
+	SAY NAME1 @930
+	SAY UNIDENTIFIED_DESC @931
+	WRITE_ASCIIE 0xf6 ~%spell%~ #8
+	WRITE_ASCIIE 0x126 ~%spell%~ #8
+
+///////////////////////////////////////////////////////////////////////////////////////////
+		
+OUTER_SET spell_num = IDS_OF_SYMBOL(~spell~ ~WIZARD_MONSTER_SUMMONING_VI~)
+ACTION_IF (spell_num > 0) BEGIN
+	LAF RES_NUM_OF_SPELL_NAME
+		STR_VAR spell_name = ~WIZARD_MONSTER_SUMMONING_VI~
+		RET spell_num = spell_num spell = spell_res
+	END
+END ELSE BEGIN
+	ADD_SPELL ~%MOD_FOLDER%/Compat/TDD/RTWI968.SPL~ 2 9 ~WIZARD_MONSTER_SUMMONING_VI~
+		SAY NAME1 @932
+		SAY UNIDENTIFIED_DESC @933
+		SPRINT spell ~%DEST_RES%~
+END
+COPY  ~%MOD_FOLDER%/Compat/TDD/SCRX34.itm~    ~override~
+	SAY NAME1 @932
+	  SAY UNIDENTIFIED_DESC @933
+	WRITE_ASCIIE 0xf6 ~%spell%~ #8
+	WRITE_ASCIIE 0x126 ~%spell%~ #8
+
+COPY_EXISTING ~ULTIMM2.bcs~ ~override~
+			  ~ARENAMA4.bcs~ ~override~
+    DECOMPILE_AND_PATCH BEGIN
+        REPLACE_TEXTUALLY ~RTWI968~ ~%spell%~
+    END
+
+ACTION_IF GAME_IS ~bg2 tob bgt~ BEGIN
+	OUTER_SPRINT newline ~%WNL%%LNL%%MNL%%TAB% ~
+	COPY_EXISTING ~MAGE14D.BCS~ ~override~
+		DECOMPILE_AND_PATCH BEGIN
+			REPLACE_TEXTUALLY
+			~HaveSpell.WIZARD_DEATH_SPELL.[%newline%].+?OR.7.~ 
+			~HaveSpell(WIZARD_DEATH_SPELL)
+			OR(10)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_IV)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_V)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_VI)~
+			REPLACE_TEXTUALLY ~GlobalLT."Spell1","LOCALS",1.[%newline%].+?OR.7.~ 
+			~GlobalLT("Spell1","LOCALS",1)
+			OR(10)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_IV)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_V)
+			SpellCast([ANYONE],WIZARD_MONSTER_SUMMONING_VI)~
+		END
+END
+ACTION_IF GAME_IS ~bg2~ BEGIN
+	EXTEND_BOTTOM ~ARENAMA4.BCS~ ~%MOD_FOLDER%/SNIP/BAF/bARENAMA4.BAF~
+END

@@ -198,7 +198,7 @@ IF
 THEN
 	RESPONSE #100
 		DisplayString(Myself,39968) // Spell Trigger - Fired
-		ApplySpell(Myself,WIZARD_MONSTER_SUMMONING_V)
+		ApplySpellRES("RTWI828",Myself)
 		SmallWait(1)
 		ApplySpell(Myself,WIZARD_IMPROVED_HASTE)
 		ApplySpellRES("IIRADT",Myself)               //WIZARD_IMPROVED_INVS_RADTEN

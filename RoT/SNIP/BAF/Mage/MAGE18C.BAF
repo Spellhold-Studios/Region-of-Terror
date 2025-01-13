@@ -260,7 +260,7 @@ IF
 	Global("Spell5","LOCALS",0)
 THEN
 	RESPONSE #100
-		ForceSpell(NearestEnemyOf(Myself),WIZARD_MONSTER_SUMMONING_VI)
+		ForceSpellRES("RTWI968",NearestEnemyOf(Myself))
 		SetGlobal("Spell5","LOCALS",1)
 END
 
