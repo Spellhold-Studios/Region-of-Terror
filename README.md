@@ -173,15 +173,21 @@ The installer includes the following components. The number of each is the compo
 
 This component installs the mod itself.</br>
 
-## 
+##
 
-#### 1. Biffing
+#### 1. Alternative Maribur area
+
+We all know that the original Maribur was built by the same construction company as Beregost. This component installs brand new Maribur location created by Cuttooth. This component requires the main component to be installed.</br>
+
+##
+
+#### 2. Biffing
 
 This component requires the main component to be installed. Compress files for better game performance. Only valid for classic (BG2:ToB or BGT) game.
 
 ##
 
-#### 2. Region of Terror Kit Pack
+#### 3. Region of Terror Kit Pack
 
 This component requires the main component to be installed. It installs the following kits in the game:
 - Holy Swordsman (Paladin)
@@ -207,10 +213,15 @@ This component requires the main component to be installed. It installs the foll
 
 :warning: **WARNING!** It is only valid for non-EE games and can't be installed with TDD Kit Packs without TobEx. Please choose which one you want to install or install TobEx first.
 
+##
+
+#### 4. Region of Terror Wizard Spells
+
+This component installs additional spells for wizards.
+
+
 <div align="right"><a href="#top">Back to top</a></div>
-
-
-<hr>
+<hr/>
 
 
 ## <a name="credits" id="credits"></a>Credits and Acknowledgements
@@ -291,7 +302,7 @@ This component requires the main component to be installed. It installs the foll
 
 ## <a name="versions" id="versions"></a>Version History
 
-#### Under development
+#### Version 6.0 (Under development)
 
 By Roberciiik:
 
@@ -302,6 +313,11 @@ By Roberciiik:
 - Fixed view point coordinates of third cutscene.
 - Added NPC portraits for EE engine.
 - Fixed incorrect name of Commoner Women from Arlax.
+
+By Weigo:
+
+- Switched to UTF-8 translations.
+- Added new Wizard Spells component.
 
 By Lzw104522773:
 

@@ -3,7 +3,7 @@ BACKUP ~weidu_external/backup/RoT~
 //AUTHOR ~Gilgamesh, King Diamond (WeiDU conversion)~ NO_IF_EVAL_BUG
 SUPPORT ~http://www.shsforums.net/forum/168-region-of-terror/ or https://github.com/SpellholdStudios/Region_of_Terror~
 
-VERSION ~v5.0~
+VERSION ~pre-v6.0~
 
 README ~rot/readme/rot-readme-%LANGUAGE%.html~ ~rot/readme/rot-readme-%LANGUAGE%.txt~ ~rot/readme/rot-readme-english.html~
 
@@ -12,11 +12,11 @@ ASK_EVERY_COMPONENT
 ALWAYS
 
 	ACTION_IF GAME_IS ~bgt soa tob~ BEGIN
-	      OUTER_SPRINT engine ~non-ee~
-	  END 
+		OUTER_SPRINT engine ~non-ee~
+	END 
 	ACTION_IF GAME_IS ~eet bg2ee~ BEGIN
-	      OUTER_SPRINT engine ~ee~
-	  END
+		OUTER_SPRINT engine ~ee~
+	END
 	
 	OUTER_SPRINT workspace "weidu_external/workspace/%MOD_FOLDER%"
 		MKDIR "%workspace%"
@@ -34,6 +34,7 @@ ALWAYS
 	
 <<<<<<<< .../blank.txt
 >>>>>>>>
+
 	ACTION_IF ~%WEIDU_OS%~ STRING_EQUAL_CASE ~win32~ BEGIN
 		OUTER_SPRINT os_slash ~\~
 		OUTER_SPRINT exe ~.exe~
@@ -43,6 +44,7 @@ ALWAYS
 		OUTER_SPRINT exe ~~
 		OUTER_SPRINT WEIDU_EXECUTABLE ~.RoT/weidu~
 	END
+
 	ACTION_IF NOT VARIABLE_IS_SET one_time_execution THEN BEGIN // check to make this happen only once per install
 		OUTER_SET one_time_execution = 1
 	
@@ -56,7 +58,7 @@ ALWAYS
 			INT_VAR
 				from_utf8 = 1
 				infer_charsets = 1
-				verbose = 1 // you can disable this if you want to skip verbose output
+				verbose = 0 // you can disable this if you want to skip verbose output
 			STR_VAR
 				default_language = ~English~
 				tra_path = EVAL "%MOD_FOLDER%/language"
@@ -65,6 +67,7 @@ ALWAYS
 				reload_array = charsetsReloadArray
 				noconvert_array = charsetsNoConvertArray
 		END
+	
 		// for AUTO_TRA: if the game is the enhanced edition, the conversion will not happen so all .tra files should be loaded from "%MOD_FOLDER%/Language"
 		ACTION_IF (GAME_IS "bgee bg2ee eet iwdee pstee") THEN BEGIN
 			OUTER_TEXT_SPRINT "TRA_LOCATION" EVAL "%MOD_FOLDER%/Language"
@@ -76,12 +79,12 @@ ALWAYS
 			OUTER_TEXT_SPRINT "TRA_LOCATION" EVAL "%HANDLE_CHARSETS_OUT_PATH%"
 			PRINT ~ANSI~
 		END
+	
 		// load ee-like item desctiptions
 		ACTION_IF GAME_IS ~bgee bg2ee eet iwdee pstee~ THEN BEGIN
 			LOAD_TRA ~%MOD_FOLDER%/Language/%LANGUAGE%/setup-ee.tra~
 		END
 	END
-	
 END
 
 AUTO_TRA "%TRA_LOCATION%/%s"
@@ -116,7 +119,6 @@ LANGUAGE ~Simplified Chinese (retranslation By Lzw104522773)~
 		 ~RoT/Language/schinese/scripts.tra~
 		 ~RoT/Language/schinese/journal.tra~
 		 ~RoT/Language/schinese/setup.tra~
-//		 ~RoT/Language/schinese/install.tra~
 
 /////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
 /////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
@@ -1365,11 +1367,9 @@ ACTION_IF GAME_IS ~eet~ BEGIN
 		inclSv = 0
 		STR_VAR
 		path_to_areas = EVAL ~%MOD_FOLDER%/Worldmap/eet/eet-areas.tbl~
-//		path_to_areas_bp = EVAL ~%MOD_FOLDER%/Worldmap/areas.tbl~
 		path_to_links = EVAL ~%MOD_FOLDER%/Worldmap/eet/eet-links.tbl~
 		path_to_trans = EVAL ~%TRA_LOCATION%/%LANGUAGE%/Worldmap.tra~
 	END
-	//INCLUDE ~%MOD_FOLDER%/worldmap/eet/PatchingAreas.tpa~
 END
 
 //////////////////////////////
@@ -2021,7 +2021,7 @@ INCLUDE ~%MOD_FOLDER%/lib/install-kits.tpa~
 /////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
 /////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
 
-BEGIN ~RoT Wizard Spell~
+BEGIN @1806
 DESIGNATED 4 LABEL ~rot_wizard_spell~
 REQUIRE_PREDICATE MOD_IS_INSTALLED "setup-RoT.tp2" (ID_OF_LABEL "setup-RoT.tp2" "region_of_terror" ) @1803
 
