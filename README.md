@@ -311,15 +311,21 @@ By Roberciiik:
 - Fixed endless loop of Pip & Brundor forge cutscene.
 - Fixed player return coordinates after second cutscene.
 - Fixed view point coordinates of third cutscene.
-- Added NPC portraits for EE engine.
+- Fixed Pip giving PC the Glowing Chainmail instead of Glowing Halberd.
 - Fixed incorrect name of Commoner Women from Arlax.
+- Added NPC portraits for EE engine.
 
 By Weigo:
 
 - Switched to UTF-8 translations.
 - Added new Wizard Spells component.
+- Fixed unexisting Wizard Spells (WIZARD_OTTO_IRRESISTIBLE_DANCE and WIZARD_FOG_CLOUD)
 
 By Lzw104522773:
+
+- Updated Simplified Chinese translation.
+
+By MephistoSatanDevil:
 
 - Updated Simplified Chinese translation.
 
