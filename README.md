@@ -317,6 +317,7 @@ By Roberciiik:
 - Fixed incorrect unlock door message in RA5603 area.
 - Fixed incorrect name of Commoner Women from Arlax.
 - Fixed graphical corrupion of door in Ice Temple first level area (RA5602).
+- Fixed Search Map to prevent conflict of travel point with region trigger in RA5600.
 
 By Weigo:
 
