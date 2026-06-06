@@ -312,6 +312,7 @@ By Roberciiik:
 - Fixed view point coordinates of third cutscene.
 - Fixed Pip giving PC the Glowing Chainmail instead of Glowing Halberd.
 - Fixed incorrect name of Commoner Women from Arlax.
+- Removed unused levers triggers in Ice Temple outdoor area (RA5601).
 - Added NPC portraits for EE engine.
 
 By Weigo:
