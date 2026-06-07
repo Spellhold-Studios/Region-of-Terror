@@ -305,15 +305,16 @@ This component installs additional spells for wizards.
 
 By Roberciiik:
 
-- Fixed original Drizzt Encounter bug introduced in version 5.0.
 - Added Spirit Soaring area to the BP-BGT-Worldmap.
+- Added NPC portraits for EE engine.
+- Removed unused levers triggers in Ice Temple outdoor area (RA5601).
+- Fixed original Drizzt Encounter bug introduced in version 5.0.
 - Fixed endless loop of Pip & Brundor forge cutscene.
 - Fixed player return coordinates after second cutscene.
 - Fixed view point coordinates of third cutscene.
 - Fixed Pip giving PC the Glowing Chainmail instead of Glowing Halberd.
 - Fixed incorrect name of Commoner Women from Arlax.
-- Removed unused levers triggers in Ice Temple outdoor area (RA5601).
-- Added NPC portraits for EE engine.
+- Fixed graphical corrupion of door in Ice Temple first level area (RA5602).
 
 By Weigo:
 
