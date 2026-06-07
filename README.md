@@ -313,6 +313,7 @@ By Roberciiik:
 - Fixed player return coordinates after second cutscene.
 - Fixed view point coordinates of third cutscene.
 - Fixed Pip giving PC the Glowing Chainmail instead of Glowing Halberd.
+- Fixed incorrect unlock door message in RA5603 area.
 - Fixed incorrect name of Commoner Women from Arlax.
 - Fixed graphical corrupion of door in Ice Temple first level area (RA5602).
 
