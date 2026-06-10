@@ -7,7 +7,7 @@
 
 <div align="center"><h1>Region of Terror</h1>
 
-<h3>A Spellhold Studios mod for Baldur's Gate II:ToB, Baldur's Gate Trilogy, BG2:EE and EET<h3>
+<h3>A Spellhold Studios mod for Baldur's Gate II: Throne of Bhaal, Baldur's Gate Trilogy, Baldur's Gate II: Enhanced Edition and Baldur's Gate: Enhanced Edition Trilogy<h3>
 
 </div><br />
 
@@ -307,6 +307,7 @@ By Roberciiik:
 
 - Added Spirit Soaring area to the BP-BGT-Worldmap.
 - Added NPC portraits for EE engine.
+- Added a text feedback to player that some door was opened after solving the puzzle in RA5603 area.
 - Removed unused levers triggers in Ice Temple outdoor area (RA5601).
 - Fixed original Drizzt Encounter bug introduced in version 5.0.
 - Fixed endless loop of Pip & Brundor forge cutscene.
@@ -330,6 +331,8 @@ By Lzw104522773:
 By MephistoSatanDevil:
 
 - Updated Simplified Chinese translation.
+
+##
 
 #### Version 5.0 (April 16, 2024)
 
@@ -481,6 +484,5 @@ By AL|EN:
 #### Version 1.0
 
 - Initial release.
-<div align="right"><a href="#top">Back to top</a></div>
 
-*[oBG2]: Classic Baldur's Gate II
+<div align="right"><a href="#top">Back to top</a></div>

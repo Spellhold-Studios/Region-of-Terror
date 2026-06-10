@@ -46,6 +46,8 @@ THEN
 		ActionOverride(Player1,OpenDoor("AR4102_Switch13"))
 		Wait(1)
 		ActionOverride(Player1,Unlock("AR4102_Door15"))
+		ActionOverride(Player1,OpenDoor("AR4102_Door15"))
+		DisplayStringHead(Player1, 39584)
 		SetGlobal("PlantedItems","RA5603",2)
 END
 
