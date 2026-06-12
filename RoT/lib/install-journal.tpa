@@ -1,0 +1,80 @@
+
+ADD_JOURNAL
+	// Help Drizzt finding his friends
+	@566095 @566097 @566098 @566099 @566428 @566094 @574781 @564316 @563195 @566096 @566101 @566100 @575863 @564865 @576012 @564701 @564415
+	// Assassinations
+	@500000 @571675 @571676 @571677 @571680 @571678 @571681
+	// Alissa's abilities
+	@574337 @574338
+	// Escaped Prisoner
+	@569174 @569173 @568920 @569177 @569178 @569184
+	// A ghost
+	@576186 @576185 @576184
+	// Castles at War
+	@564128 @564221 @564220 @564219 @564130 @564132 @564131 @564129
+	// The hermit
+	@572810 @572811 @572812
+	// Lamorine's Brother
+	@572896 @572897 @572898 @572899 @572903
+	// The strange talking armor
+	@571685 @571711 @571709 @571712 @571713 @571714
+	// Demons in the Spirit Soaring
+	@571235 @571236 @571237 @571233
+	// Help the thief in Arlax
+	@568192 @568205 @568220 @568198 @568221 @568222
+	// Clob's son missing
+	@567005 @567011 @567010 @567006 @567008 @567009
+	// The Cult of the Beast
+	@574058 @574059 @574061
+	// Weapons missing
+	@572915 @572917
+	// Journet to the North
+	@571803 @571802 @571801 @575862 @571806 @571805
+	// Eleana and the scroll
+	@568695 @568867 @568877 @568875 @568873 @568881 @568882 @568689 @568691
+	// Problems in the Castle
+	@570608 @570607 @570609 @570606
+	// Helping the Farmers
+	@568545 @568546 @568549
+	// Find Garem's ring from the sewers
+	@568263 @568281
+	// The Quest for the Eye of a God
+	@570462 @570505
+	// Revenge on the behalf of Hands
+	@566652 @566653
+	// Westchar in troubles
+	@565530 @565533 @565536 @565656 @565655 @566285 @565653 @566284 @565535 @565529 @565641
+	// Kill the cyclop leader
+	@563941 @563943
+	// Ilhan's Message
+	@570748 @570736 @570734
+	// Thief at Kindast's store
+	@566785 @566784 @566777 @566781 @566782 @566783
+	// Hunting
+	@576084 @576086
+	// Find Maralda's scroll
+	@563708 @563712
+	// Dragon's Sanctuary
+	@573330 @573332
+	// What is Matthew up to?
+	@574055 @574056 @574057
+	// The depressed people
+	@572659 @572660 @572661 @572662 @572663 @572664 @572666 @572670
+	// Molly's Stolen Necklace
+	@566564 @566565 @566566
+	// Necromancer after Randall
+	@574048 @574049 @574051 @574050 @574052
+	// Giants took Rob's wife
+	@564299 @564301
+	// The hunters
+	@572863 @572864
+	// Wulfgar's Wife
+	@573242 @573244 @573245 @573243
+	// Help Morandin
+	@563001
+	// The lost Gragha
+	@575059 @575061 @575062
+	// Dead monk's puzzle
+	@580000 @580001 @580002
+
+	    USING ~%TRA_LOCATION%/journal.tra~

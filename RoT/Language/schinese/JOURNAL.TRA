@@ -892,3 +892,19 @@
 @573332 = ~龙的圣殿
 
 我找到了那个区域。也许我应该稍微探索一下。~
+
+////////////////
+// New for v6 //
+////////////////
+
+@580000 = ~Dead monk's puzzle
+
+I spoke with dead monk's spirit. He want me to play a game with him before he let me go downstairs. I should move gems around and place them on a correct bed in a room south from him. He gave me some clues: The colors of night and day lay beside each other, south from another color. When you step into the room, yellow is on your right side. There's a group of beds, three of them exactly. Two of these beds contain the same coloured gems, light and dark. The last contains another color, light one, not dark. Between red and yellow is violet. Between light red and light blue is green. Light red is in a group of two beds.~
+
+@580001 = ~Dead monk's puzzle
+
+I managed to solve the spirit's puzzle, and the entrance to the next level of this temple is now open.~
+
+@580002 = ~Dead monk's puzzle
+
+I killed the monk... however the passage remains closed. Is there another way to go downstairs?~

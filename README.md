@@ -308,6 +308,8 @@ By Roberciiik:
 - Added Spirit Soaring area to the BP-BGT-Worldmap.
 - Added NPC portraits for EE engine.
 - Added a text feedback to player that some door was opened after solving the puzzle in RA5603 area.
+- Added journal entries for quest lines:
+  - Ice Temple Monk's Puzzle
 - Removed unused levers triggers in Ice Temple outdoor area (RA5601).
 - Fixed original Drizzt Encounter bug introduced in version 5.0.
 - Fixed endless loop of Pip & Brundor forge cutscene.
@@ -322,7 +324,9 @@ By Weigo:
 
 - Switched to UTF-8 translations.
 - Added new Wizard Spells component.
-- Fixed unexisting Wizard Spells (WIZARD_OTTO_IRRESISTIBLE_DANCE and WIZARD_FOG_CLOUD)
+- Fixed installation issue with unexisting Wizard Spells:
+  - WIZARD_OTTO_IRRESISTIBLE_DANCE
+  - WIZARD_FOG_CLOUD
 
 By Lzw104522773:
 
