@@ -313,12 +313,16 @@ By Roberciiik:
 - Fixed Pip giving PC the Glowing Chainmail instead of Glowing Halberd.
 - Fixed incorrect name of Commoner Women from Arlax.
 - Added NPC portraits for EE engine.
+- Added journal entries for quest lines:
+  - Ice Temple Monk's Puzzle
 
 By Weigo:
 
 - Switched to UTF-8 translations.
 - Added new Wizard Spells component.
-- Fixed unexisting Wizard Spells (WIZARD_OTTO_IRRESISTIBLE_DANCE and WIZARD_FOG_CLOUD)
+- Fixed installation issue with unexisting Wizard Spells:
+  - WIZARD_OTTO_IRRESISTIBLE_DANCE
+  - WIZARD_FOG_CLOUD
 
 By Lzw104522773:
 

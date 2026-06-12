@@ -13,6 +13,7 @@ IF
 THEN
 	RESPONSE #100
 		SetGlobal("PlantedItems","RA5602",1)
+		Continue()
 END
 
 IF
@@ -23,6 +24,20 @@ THEN
 		ActionOverride("MonksS19",OpenDoor("5602DFl"))
 		ActionOverride("MonksS19",DestroySelf())
 		SetGlobal("KeyQuest","RA5602",3)
+		EraseJournalEntry(@580000)
+		AddJournalEntry(@580001, QUEST_DONE)
+		Continue()
+END
+
+IF
+	Dead("MonksS19")
+	GlobalLT("KeyQuest", "RA5602", 2)
+THEN
+	RESPONSE #100
+		SetGlobal("KeyQuest", "RA5602", 4)
+		EraseJournalEntry(@580000)
+		AddJournalEntry(@580002, QUEST_DONE)
+		Continue()
 END
 
 
