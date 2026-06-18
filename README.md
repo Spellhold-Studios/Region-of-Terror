@@ -13,7 +13,6 @@
 
 
 **Author:** Gilgamesh (Pekka Syrjänen)  
-**Mod Website:** <a href="http://www.spellholdstudios.net/ie/rot">Spellhold Studios</a>  
 **Mod Forum:** <a href="http://www.shsforums.net/forum/168-region-of-terror/">Region of Terror</a>  
 
 
@@ -232,7 +231,7 @@ This component installs additional spells for wizards.
 
 #### Special Acknowledgements to:
 
-- <a href="http://www.spellholdstudios.net/">Spellhold Studios</a> team for hosting the mod (<a href="http://www.shsforums.net">Forums</a>).
+- <a href="https://www.shsforums.net/">Spellhold Studios</a> team for hosting the mod.
 - <a href="www.forgottenwars.net">FORGOTTEN WARS</a> (for taking the <a href="http://forums.forgottenwars.net/index.php?showforum=173">mod</a> after TeamBG's death).
 - TEAM BG (for hosting both our site and forum, and for providing the best IE editing tools in the world!).
 - The creators of the Baldur's Gate series: <a href="http://www.bioware.com/">Bioware</a> and <a href="http://www.obsidian.net/">Black Isle Studios</a>.
@@ -448,7 +447,7 @@ By AL|EN:
 8. RR4002.BAF. Items destruction sequence optimized.
 9. "weidu --out ROT-TIS1 --biff-get-rest AR0334.tis" added to .bat to extract that TIS from the compressed BIF.
 10. Translation fixed for all scripts in \SNIP\BAF\ (SCRIPT.TRA)
-11. ALENNA.D - fixed several dialogue flows (from <a href="http://forums.spellholdstudios.net/index.php?showtopic=22078&st=20">Sandman</a>).
+11. ALENNA.D - fixed several dialogue flows (from <a href="https://www.shsforums.net/topic/22078-bugs-found-in-roterror/page-2#entry271216">Sandman</a>).
 12. NEWPO01.ITM - can be used by Wizardslayers (Healing potion).
 13. SPCL379.SPL - Planar Druid fire resistance bonus should be 50%, not 25 as it was.
 14. SINGER bard kit Bard Songs fixed.
