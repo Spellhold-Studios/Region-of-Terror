@@ -520,9 +520,9 @@ IF ~~ THEN BEGIN 68 // from: 58.0
   IF ~~ THEN EXTERN ~GRAYFOOT~ 111
 END
 
-IF ~~ THEN BEGIN 69 // from:
+IF ~~ THEN BEGIN 69 // from: GRAYFOOT 153.0 or 157.0
   SAY @89
-  IF ~~ THEN DO ~SetGlobal("ForgedItemGray","RR3101",13)~ GOTO 70
+  IF ~~ THEN GOTO 70
 END
 
 IF ~~ THEN BEGIN 70 // from: 69.0
