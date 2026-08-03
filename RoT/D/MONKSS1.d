@@ -57,7 +57,7 @@ END
 
 IF ~~ THEN BEGIN 11 // from: 10.0
   SAY @11
-  IF ~~ THEN DO ~SetGlobal("KeyQuest","RA5602",1)~ EXIT
+  IF ~~ THEN DO ~SetGlobal("KeyQuest","RA5602",1)~ UNSOLVED_JOURNAL @580000 EXIT
 END
 
 IF ~Global("KeyQuest","RA5602",1)~ THEN BEGIN 12
@@ -77,7 +77,7 @@ END
 IF ~~ THEN BEGIN 14 // from: 13.0
   SAY @18
   IF ~~ THEN DO ~SetGlobal("KeyQuest","RA5602",2)
-AddExperienceParty(50000)~ EXIT
+                 AddExperienceParty(50000)~ EXIT
 END
 
 IF ~~ THEN BEGIN 15 // from: 13.1
