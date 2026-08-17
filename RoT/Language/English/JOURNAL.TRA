@@ -875,7 +875,9 @@ We got the weapons back.~
 @575059 = ~The lost Gragha
 
 While speaking with the Gragha King it was mentioned that there might be a few Graghas still alive in the other city. I should try to look for them.~
-@575061 = ~The lost Gragha  I found three Gragha alive. They started making their way back to the city.~
+@575061 = ~The lost Gragha
+
+I found three Gragha alive. They started making their way back to the city.~
 //solved
 @575062 = ~The lost Gragha
 
@@ -891,26 +893,21 @@ I found Henrick and took him to meet the ghost. It became apparent that she had 
 
 I found the area. Maybe I should explore it a little.~
 
+////////////////
+// New for v6 //
+////////////////
 
+@580000 = ~Dead monk's puzzle
 
+I spoke with dead monk's spirit. He want me to play a game with him before he let me go downstairs. I should move gems around and place them on a correct bed in a room south from him. He gave me some clues: The colors of night and day lay beside each other, south from another color. When you step into the room, yellow is on your right side. There's a group of beds, three of them exactly. Two of these beds contain the same coloured gems, light and dark. The last contains another color, light one, not dark. Between red and yellow is violet. Between light red and light blue is green. Light red is in a group of two beds.~
 
+@580001 = ~Dead monk's puzzle
 
+I managed to solve the spirit's puzzle, and the entrance to the next level of this temple is now open.~
 
+@580002 = ~Dead monk's puzzle
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+I killed the monk... however the passage remains closed. Is there another way to go downstairs?~
 
 
 

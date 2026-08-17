@@ -306,9 +306,11 @@ This component installs additional spells for wizards.
 By Roberciiik:
 
 - Added Spirit Soaring area to the BP-BGT-Worldmap.
-- Added NPC portraits for EE engine.
-- Added a text feedback to player that some door was opened after solving the puzzle in RA5603 area.
 - Added background animation to the six summoning places in the Cave area (RA5002), so the places are now clearly recognizable.
+- Added a text feedback to player that some door was opened after solving the puzzle in RA5603 area.
+- Added NPC portraits for EE engine.
+- Added journal entries for quest lines:
+  - Ice Temple Monk's Puzzle
 - Removed unused levers triggers in Ice Temple outdoor area (RA5601).
 - Fixed original Drizzt Encounter bug introduced in version 5.0.
 - Fixed endless loop of Pip & Brundor forge cutscene.
@@ -324,7 +326,9 @@ By Weigo:
 
 - Switched to UTF-8 translations.
 - Added new Wizard Spells component.
-- Fixed unexisting Wizard Spells (WIZARD_OTTO_IRRESISTIBLE_DANCE and WIZARD_FOG_CLOUD)
+- Fixed installation issue with unexisting Wizard Spells:
+  - WIZARD_OTTO_IRRESISTIBLE_DANCE
+  - WIZARD_FOG_CLOUD
 
 By Lzw104522773:
 
